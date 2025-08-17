@@ -1,0 +1,117 @@
+<!-- templates/admin/dashboard.html - Dashboard admin -->
+{% extends "base.html" %}
+{% block title %}Dashboard Admin{% endblock %}
+{% block header_title %}Administration{% endblock %}
+{% block content %}
+<div class="p-4 space-y-6">
+    <!-- Statistiques générales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-800">Compétitions</h3>
+                    <p class="text-3xl font-bold text-blue-600" id="stat-competitions">-</p>
+                    <p class="text-sm text-gray-500">Total</p>
+                </div>
+                <div class="text-blue-600">🏆</div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-800">Grimpeurs</h3>
+                    <p class="text-3xl font-bold text-green-600" id="stat-grimpeurs">-</p>
+                    <p class="text-sm text-gray-500">Inscrits</p>
+                </div>
+                <div class="text-green-600">👥</div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-800">Voies</h3>
+                    <p class="text-3xl font-bold text-purple-600" id="stat-voies">-</p>
+                    <p class="text-sm text-gray-500">Créées</p>
+                </div>
+                <div class="text-purple-600">🧗</div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-800">Validations</h3>
+                    <p class="text-3xl font-bold text-orange-600" id="stat-validations">-</p>
+                    <p class="text-sm text-gray-500">Total</p>
+                </div>
+                <div class="text-orange-600">✅</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions rapides -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4">Actions rapides</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <a href="/admin/competitions" class="block p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                <div class="text-blue-600 text-2xl mb-2">🏆</div>
+                <h4 class="font-semibold">Nouvelle compétition</h4>
+                <p class="text-sm text-gray-600">Créer une nouvelle compétition</p>
+            </a>
+            
+            <a href="/admin/voies" class="block p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                <div class="text-green-600 text-2xl mb-2">🧗</div>
+                <h4 class="font-semibold">Nouvelle voie</h4>
+                <p class="text-sm text-gray-600">Ajouter une voie avec photo</p>
+            </a>
+            
+            <a href="/admin/users" class="block p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                <div class="text-purple-600 text-2xl mb-2">👥</div>
+                <h4 class="font-semibold">Gérer utilisateurs</h4>
+                <p class="text-sm text-gray-600">Ajouter ou modifier des profils</p>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Compétitions récentes -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Compétitions récentes</h3>
+            <a href="/admin/competitions" class="text-blue-600 hover:text-blue-700">Voir tout →</a>
+        </div>
+        <div id="recent-competitions" 
+             hx-get="/api/admin/competitions?limit=5" 
+             hx-trigger="load">
+            <div class="loading h-20"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Charger les statistiques
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+});
+
+function loadStats() {
+    fetch('/api/admin/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('stat-competitions').textContent = data.competitions || '0';
+            document.getElementById('stat-grimpeurs').textContent = data.grimpeurs || '0';
+            document.getElementById('stat-voies').textContent = data.voies || '0';
+            document.getElementById('stat-validations').textContent = data.validations || '0';
+        })
+        .catch(error => console.error('Erreur stats:', error));
+}
+
+// Template pour les compétitions récentes
+htmx.on('htmx:afterSettle', function(evt) {
+    if (evt.target.id === 'recent-competitions') {
+        // Les données sont déjà chargées par HTMX
+    }
+});
+</script>
+{% endblock %}
