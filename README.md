@@ -39,39 +39,39 @@ Fonctionnalités:
 
 4. Structure des fichiers:
    ```
-climbing_app/
-├── app.py                          # Application Flask principale
-├── models.py                       # Modèles de base de données
-├── routes.py                       # Routes API
-├── config.py                       # Configuration
-├── requirements.txt                # Dépendances Python
-├── static/
-│   ├── css/
-│   │   └── custom.css             # Styles personnalisés
-│   ├── js/
-│   │   ├── app.js                 # JavaScript principal
-│   │   ├── voie-editor.js         # Éditeur de voies
-│   │   └── classement.js          # Interface classement
-│   └── uploads/                   # Images des voies
-└── templates/
-    ├── base.html                  # Template de base
-    ├── index.html                 # Page d'accueil
-    ├── login.html                 # Page de connexion
-    ├── admin/
-    │   ├── dashboard.html         # Dashboard admin
-    │   ├── competitions.html      # Gestion compétitions
-    │   ├── voies.html            # Gestion voies
-    │   ├── users.html            # Gestion utilisateurs
-    │   └── categories.html        # Gestion catégories
-    ├── grimpeur/
-    │   ├── dashboard.html         # Dashboard grimpeur
-    │   ├── voies.html            # Liste des voies
-    │   ├── voie-detail.html      # Détail d'une voie
-    │   ├── profile.html          # Profil utilisateur
-    │   └── classement.html       # Classement
-    └── public/
-        ├── inscription.html       # Inscription publique
-        └── classement-display.html # Affichage public classement
+    climbing_app/
+    ├── app.py                          # Application Flask principale
+    ├── models.py                       # Modèles de base de données
+    ├── routes.py                       # Routes API
+    ├── config.py                       # Configuration
+    ├── requirements.txt                # Dépendances Python
+    ├── static/
+    │   ├── css/
+    │   │   └── custom.css             # Styles personnalisés
+    │   ├── js/
+    │   │   ├── app.js                 # JavaScript principal
+    │   │   ├── voie-editor.js         # Éditeur de voies
+    │   │   └── classement.js          # Interface classement
+    │   └── uploads/                   # Images des voies
+    └── templates/
+        ├── base.html                  # Template de base
+        ├── index.html                 # Page d'accueil
+        ├── login.html                 # Page de connexion
+        ├── admin/
+        │   ├── dashboard.html         # Dashboard admin
+        │   ├── competitions.html      # Gestion compétitions
+        │   ├── voies.html            # Gestion voies
+        │   ├── users.html            # Gestion utilisateurs
+        │   └── categories.html        # Gestion catégories
+        ├── grimpeur/
+        │   ├── dashboard.html         # Dashboard grimpeur
+        │   ├── voies.html            # Liste des voies
+        │   ├── voie-detail.html      # Détail d'une voie
+        │   ├── profile.html          # Profil utilisateur
+        │   └── classement.html       # Classement
+        └── public/
+            ├── inscription.html       # Inscription publique
+            └── classement-display.html # Affichage public classement
 
    ```
 
