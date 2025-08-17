@@ -1,0 +1,842 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion Utilisateurs - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-users text-info"></i>
+                Gestion des Utilisateurs
+            </h2>
+            <p class="text-muted mb-0">Gérez les grimpeurs, ouvreurs et administrateurs</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success" onclick="generateCodes()">
+                <i class="fas fa-key"></i>
+                Générer codes
+            </button>
+            <button class="btn btn-primary" onclick="showUserModal()">
+                <i class="fas fa-user-plus"></i>
+                Nouvel utilisateur
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalUsers">0</h4>
+                            <p class="mb-0">Total utilisateurs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-shield fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Rechercher</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Nom, prénom, email...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Rôle</label>
+                    <select class="form-select" id="roleFilter">
+                        <option value="">Tous les rôles</option>
+                        <option value="admin">Administrateur</option>
+                        <option value="ouvreur">Ouvreur</option>
+                        <option value="grimpeur">Grimpeur</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Catégorie</label>
+                    <select class="form-select" id="categorieFilter">
+                        <option value="">Toutes</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tous</option>
+                        <option value="active">Actif</option>
+                        <option value="inactive">Inactif</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Code attribué</label>
+                    <select class="form-select" id="codeFilter">
+                        <option value="">Tous</option>
+                        <option value="with_code">Avec code</option>
+                        <option value="without_code">Sans code</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()" title="Reset filtres">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions en lot -->
+    <div class="card mb-4" id="bulkActions" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><span id="selectedCount">0</span> utilisateur(s) sélectionné(s)</strong>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-outline-success btn-sm" onclick="bulkGenerateCodes()">
+                        <i class="fas fa-key"></i> Générer codes
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="bulkSendCodes()">
+                        <i class="fas fa-envelope"></i> Envoyer codes
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="bulkChangeCategory()">
+                        <i class="fas fa-tags"></i> Changer catégorie
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="bulkDelete()">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des utilisateurs -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i>
+                Liste des utilisateurs
+            </h5>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAll">
+                <label class="form-check-label" for="selectAll">
+                    Tout sélectionner
+                </label>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="40"></th>
+                            <th>Utilisateur</th>
+                            <th>Contact</th>
+                            <th>Rôle</th>
+                            <th>Catégorie</th>
+                            <th>Code</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Utilisateur -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user"></i>
+                    <span id="modalTitle">Nouvel utilisateur</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="userForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" class="form-control" id="userPrenom" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="userNom" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="userEmail">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="userTelephone">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Rôle *</label>
+                            <select class="form-select" id="userRole" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="grimpeur">Grimpeur</option>
+                                <option value="ouvreur">Ouvreur</option>
+                                <option value="admin">Administrateur</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Catégorie</label>
+                            <select class="form-select" id="userCategorie">
+                                <option value="">Sélectionner...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date de naissance</label>
+                            <input type="date" class="form-control" id="userDateNaissance">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Niveau d'escalade</label>
+                            <select class="form-select" id="userNiveau">
+                                <option value="">Non spécifié</option>
+                                <option value="debutant">Débutant</option>
+                                <option value="intermediaire">Intermédiaire</option>
+                                <option value="confirme">Confirmé</option>
+                                <option value="expert">Expert</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Club/Équipe</label>
+                            <input type="text" class="form-control" id="userClub">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Commentaires/Notes</label>
+                            <textarea class="form-control" id="userCommentaires" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="userActif" checked>
+                                <label class="form-check-label" for="userActif">
+                                    Utilisateur actif
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="userGenererCode">
+                                <label class="form-check-label" for="userGenererCode">
+                                    Générer un code de connexion
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="userId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Génération de codes -->
+<div class="modal fade" id="generateCodesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key"></i>
+                    Générer codes de connexion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sélectionnez les utilisateurs pour lesquels générer des codes de connexion :</p>
+                
+                <div class="mb-3">
+                    <label class="form-label">Critères</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="genCodeGrimpeurs" checked>
+                        <label class="form-check-label" for="genCodeGrimpeurs">
+                            Tous les grimpeurs sans code
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="genCodeOuvreurs">
+                        <label class="form-check-label" for="genCodeOuvreurs">
+                            Tous les ouvreurs sans code
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="genCodeRegenerer">
+                        <label class="form-check-label" for="genCodeRegenerer">
+                            Régénérer les codes existants
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Les codes générés seront affichés dans un récapitulatif que vous pourrez imprimer ou exporter.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-primary" onclick="performGenerateCodes()">
+                    <i class="fas fa-key"></i>
+                    Générer les codes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Codes générés -->
+<div class="modal fade" id="codesResultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key"></i>
+                    Codes de connexion générés
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-end mb-3">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="printCodes()">
+                            <i class="fas fa-print"></i>
+                            Imprimer
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="exportCodes()">
+                            <i class="fas fa-download"></i>
+                            Exporter CSV
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="codesTable"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let users = [];
+let categories = [];
+let filteredUsers = [];
+let selectedUsers = [];
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    initFilters();
+    initForm();
+    initSelection();
+});
+
+// Chargement des données
+function loadData() {
+    Promise.all([
+        fetch('/api/users').then(r => r.json()),
+        fetch('/api/categories').then(r => r.json())
+    ])
+    .then(([usersData, categoriesData]) => {
+        users = usersData.users || [];
+        categories = categoriesData.categories || [];
+        
+        populateSelects();
+        filteredUsers = [...users];
+        updateTable();
+        updateStats();
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors du chargement des données', 'danger');
+    });
+}
+
+// Population des selects
+function populateSelects() {
+    // Catégories dans le filtre
+    const categorieFilter = document.getElementById('categorieFilter');
+    categorieFilter.innerHTML = '<option value="">Toutes</option>';
+    categories.forEach(cat => {
+        categorieFilter.innerHTML += `<option value="${cat.id}">${cat.nom}</option>`;
+    });
+    
+    // Catégories dans le modal
+    const userCategorie = document.getElementById('userCategorie');
+    userCategorie.innerHTML = '<option value="">Sélectionner...</option>';
+    categories.forEach(cat => {
+        userCategorie.innerHTML += `<option value="${cat.id}">${cat.nom}</option>`;
+    });
+}
+
+// Initialisation des filtres
+function initFilters() {
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('roleFilter').addEventListener('change', applyFilters);
+    document.getElementById('categorieFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    document.getElementById('codeFilter').addEventListener('change', applyFilters);
+}
+
+// Initialisation du formulaire
+function initForm() {
+    document.getElementById('userForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveUser();
+    });
+}
+
+// Initialisation de la sélection
+function initSelection() {
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.user-select');
+        checkboxes.forEach(cb => {
+            cb.checked = this.checked;
+            updateUserSelection(cb.value, cb.checked);
+        });
+    });
+}
+
+// Mise à jour du tableau
+function updateTable() {
+    const tbody = document.getElementById('usersTableBody');
+    
+    if (filteredUsers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                    <i class="fas fa-users fa-3x mb-3 opacity-50"></i><br>
+                    Aucun utilisateur trouvé
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = filteredUsers.map(user => `
+        <tr>
+            <td>
+                <input type="checkbox" class="form-check-input user-select" 
+                       value="${user.id}" 
+                       onchange="updateUserSelection(${user.id}, this.checked)">
+            </td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div class="avatar-circle bg-${getRoleColor(user.role)}">
+                            ${user.prenom.charAt(0)}${user.nom.charAt(0)}
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">${escapeHtml(user.prenom)} ${escapeHtml(user.nom)}</h6>
+                        ${user.club ? `<small class="text-muted">${escapeHtml(user.club)}</small>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td>
+                ${user.email ? `<div><i class="fas fa-envelope text-muted me-1"></i> ${escapeHtml(user.email)}</div>` : ''}
+                ${user.telephone ? `<div><i class="fas fa-phone text-muted me-1"></i> ${escapeHtml(user.telephone)}</div>` : ''}
+            </td>
+            <td>
+                <span class="badge bg-${getRoleColor(user.role)}">${getRoleText(user.role)}</span>
+            </td>
+            <td>
+                ${user.categorie_nom ? `<span class="badge bg-secondary">${escapeHtml(user.categorie_nom)}</span>` : '<span class="text-muted">-</span>'}
+            </td>
+            <td>
+                ${user.code_connexion ? 
+                    `<code class="text-primary fw-bold">${user.code_connexion}</code>` : 
+                    '<span class="text-muted">Aucun</span>'
+                }
+            </td>
+            <td>
+                ${user.actif ? 
+                    '<span class="badge bg-success">Actif</span>' : 
+                    '<span class="badge bg-secondary">Inactif</span>'
+                }
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewUser(${user.id})" title="Voir profil">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="generateUserCode(${user.id})" title="Générer code">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="sendUserCode(${user.id})" title="Envoyer code">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    updateSelectionUI();
+}
+
+// Mise à jour des statistiques
+function updateStats() {
+    const stats = users.reduce((acc, user) => {
+        acc.total++;
+        acc[user.role]++;
+        return acc;
+    }, { total: 0, grimpeur: 0, ouvreur: 0, admin: 0 });
+    
+    document.getElementById('totalUsers').textContent = stats.total;
+    document.getElementById('grimpeurs').textContent = stats.grimpeur;
+    document.getElementById('ouvreurs').textContent = stats.ouvreur;
+    document.getElementById('admins').textContent = stats.admin;
+}
+
+// Application des filtres
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const role = document.getElementById('roleFilter').value;
+    const categorieId = document.getElementById('categorieFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const codeStatus = document.getElementById('codeFilter').value;
+    
+    filteredUsers = users.filter(user => {
+        // Filtre de recherche
+        if (search && 
+            !user.prenom.toLowerCase().includes(search) &&
+            !user.nom.toLowerCase().includes(search) &&
+            !user.email?.toLowerCase().includes(search) &&
+            !user.telephone?.includes(search) &&
+            !user.club?.toLowerCase().includes(search)) {
+            return false;
+        }
+        
+        // Filtre rôle
+        if (role && user.role !== role) {
+            return false;
+        }
+        
+        // Filtre catégorie
+        if (categorieId && user.categorie_id?.toString() !== categorieId) {
+            return false;
+        }
+        
+        // Filtre statut
+        if (status === 'active' && !user.actif) {
+            return false;
+        }
+        if (status === 'inactive' && user.actif) {
+            return false;
+        }
+        
+        // Filtre code
+        if (codeStatus === 'with_code' && !user.code_connexion) {
+            return false;
+        }
+        if (codeStatus === 'without_code' && user.code_connexion) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    updateTable();
+}
+
+// Gestion de la sélection
+function updateUserSelection(userId, selected) {
+    if (selected) {
+        if (!selectedUsers.includes(userId)) {
+            selectedUsers.push(userId);
+        }
+    } else {
+        selectedUsers = selectedUsers.filter(id => id !== userId);
+    }
+    
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    selectedCount.textContent = selectedUsers.length;
+    bulkActions.style.display = selectedUsers.length > 0 ? 'block' : 'none';
+    
+    // Mise à jour du checkbox "Tout sélectionner"
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.user-select');
+    selectAll.checked = checkboxes.length > 0 && selectedUsers.length === checkboxes.length;
+    selectAll.indeterminate = selectedUsers.length > 0 && selectedUsers.length < checkboxes.length;
+}
+
+// Actions sur les utilisateurs
+function showUserModal(user = null) {
+    document.getElementById('modalTitle').textContent = user ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur';
+    
+    if (user) {
+        document.getElementById('userId').value = user.id;
+        document.getElementById('userPrenom').value = user.prenom;
+        document.getElementById('userNom').value = user.nom;
+        document.getElementById('userEmail').value = user.email || '';
+        document.getElementById('userTelephone').value = user.telephone || '';
+        document.getElementById('userRole').value = user.role;
+        document.getElementById('userCategorie').value = user.categorie_id || '';
+        document.getElementById('userDateNaissance').value = user.date_naissance || '';
+        document.getElementById('userNiveau').value = user.niveau || '';
+        document.getElementById('userClub').value = user.club || '';
+        document.getElementById('userCommentaires').value = user.commentaires || '';
+        document.getElementById('userActif').checked = user.actif;
+        document.getElementById('userGenererCode').checked = false;
+    } else {
+        document.getElementById('userForm').reset();
+        document.getElementById('userId').value = '';
+        document.getElementById('userActif').checked = true;
+        document.getElementById('userGenererCode').checked = true;
+    }
+    
+    new bootstrap.Modal(document.getElementById('userModal')).show();
+}
+
+function editUser(id) {
+    const user = users.find(u => u.id === id);
+    if (user) {
+        showUserModal(user);
+    }
+}
+
+function viewUser(id) {
+    window.open(`/admin/users/${id}/profile`, '_blank');
+}
+
+function generateUserCode(id) {
+    if (confirm('Générer un nouveau code de connexion ? L\'ancien code sera invalidé.')) {
+        fetch(`/api/users/${id}/generate-code`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(`Code généré : ${data.code}`, 'success');
+                loadData();
+            } else {
+                showAlert(data.message || 'Erreur lors de la génération', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la génération du code', 'danger');
+        });
+    }
+}
+
+function sendUserCode(id) {
+    const user = users.find(u => u.id === id);
+    if (!user || !user.code_connexion) {
+        showAlert('Aucun code à envoyer', 'warning');
+        return;
+    }
+    
+    if (!user.email) {
+        showAlert('Aucune adresse email renseignée', 'warning');
+        return;
+    }
+    
+    fetch(`/api/users/${id}/send-code`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Code envoyé par email', 'success');
+        } else {
+            showAlert(data.message || 'Erreur lors de l\'envoi', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de l\'envoi', 'danger');
+    });
+}
+
+function deleteUser(id) {
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${user.prenom} ${user.nom} ? Cette action supprimera aussi toutes ses validations.`)) {
+        fetch(`/api/users/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Utilisateur supprimé avec succès', 'success');
+                loadData();
+            } else {
+                showAlert(data.message || 'Erreur lors de la suppression', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la suppression', 'danger');
+        });
+    }
+}
+
+function saveUser() {
+    const formData = {
+        prenom: document.getElementById('userPrenom').value.trim(),
+        nom: document.getElementById('userNom').value.trim(),
+        email: document.getElementById('userEmail').value.trim(),
+        telephone: document.getElementById('userTelephone').value.trim(),
+        role: document.getElementById('userRole').value,
+        categorie_id: document.getElementById('userCategorie').value || null,
+        date_naissance: document.getElementById('userDateNaissance').value || null,
+        niveau: document.getElementById('userNiveau').value || null,
+        club: document.getElementById('userClub').value.trim(),
+        commentaires: document.getElementById('userCommentaires').value.trim(),
+        actif: document.getElementById('userActif').checked,
+        generer_code: document.getElementById('userGenererCode').checked
+    };
+    
+    const userId = document.getElementById('userId').value;
+    const url = userId ? `/api/users/${userId}` : '/api/users';
+    const method = userId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let message = userId ? 'Utilisateur modifié avec succès' : 'Utilisateur créé avec succès';
+            if (data.code) {
+                message += ` - Code généré : ${data.code}`;
+            }
+            showAlert(message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            loadData();
+        } else {
+            showAlert(data.message || 'Erreur lors de la sauvegarde', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la sauvegarde', 'danger');
+    });
+}
+
+// Actions en lot
+function generateCodes() {
+    new bootstrap.Modal(document.getElementById('generateCodesModal')).show();
+}
+
+function performGenerateCodes() {
+    const criteria = {
+        grimpeurs: document.getElementById('genCodeGrimpeurs').checked,
+        ouvreurs: document.getElementById('genCodeOuvreurs').checked,
+        regenerer: document.getElementById('genCodeRegenerer').checked
+    };
+    
+    fetch('/api/users/generate-codes-bulk', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(criteria)
+    })
+    . fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="grimpeurs">0</h4>
+                            <p class="mb-0">Grimpeurs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-climbing fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="ouvreurs">0</h4>
+                            <p class="mb-0">Ouvreurs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-cog fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="admins">0</h4>
+                            <p class="mb-0">Administrateurs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas
