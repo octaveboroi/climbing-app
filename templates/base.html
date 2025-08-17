@@ -1,0 +1,87 @@
+<!-- templates/base.html - Template de base -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Compétition Escalade{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app" class="relative">
+        {% if session.user_id %}
+        <!-- Header avec menu hamburger -->
+        <header class="bg-blue-600 text-white p-4 flex justify-between items-center sticky top-0 z-40">
+            <div class="hamburger" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <h1 class="text-lg font-bold">{% block header_title %}Escalade{% endblock %}</h1>
+            <div class="w-8"></div>
+        </header>
+
+        <!-- Menu latéral -->
+        <div class="backdrop" id="backdrop" onclick="closeMenu()"></div>
+        <nav class="menu-overlay" id="menuOverlay">
+            <div class="p-4 bg-blue-600 text-white">
+                <h2 class="text-lg font-bold">Menu</h2>
+                <p class="text-sm opacity-90">{{ session.user_role|title }}</p>
+            </div>
+            <div class="p-4">
+                <ul class="space-y-2">
+                    {% if session.user_role in ['admin', 'ouvreur'] %}
+                        <li><a href="{{ url_for('admin_dashboard') }}" class="menu-item">🏠 Dashboard</a></li>
+                        <li><a href="{{ url_for('admin_users') }}" class="menu-item">👥 Utilisateurs</a></li>
+                        <li><a href="{{ url_for('admin_competitions') }}" class="menu-item">🏆 Compétitions</a></li>
+                        <li><a href="{{ url_for('admin_voies') }}" class="menu-item">🧗 Voies</a></li>
+                        {% if session.user_role == 'admin' %}
+                        <li><a href="/admin/categories" class="menu-item">📋 Catégories</a></li>
+                        <li><a href="/admin/levels" class="menu-item">📊 Niveaux</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li><a href="{{ url_for('grimpeur_dashboard') }}" class="menu-item">🏠 Dashboard</a></li>
+                        <li><a href="/grimpeur/profile" class="menu-item">👤 Profil</a></li>
+                        <li><a href="{{ url_for('grimpeur_voies') }}" class="menu-item">🧗 Voies</a></li>
+                        <li><a href="/grimpeur/classement" class="menu-item">🏆 Classement</a></li>
+                        <li><a href="/grimpeur/competitions" class="menu-item">📅 Compétitions</a></li>
+                        <li><a href="/grimpeur/grimpeurs" class="menu-item">👥 Grimpeurs</a></li>
+                    {% endif %}
+                    <hr class="my-4">
+                    <li><a href="/logout" class="menu-item text-red-600">🚪 Déconnexion</a></li>
+                </ul>
+            </div>
+        </nav>
+        {% endif %}
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div id="flash-messages" class="fixed top-20 left-4 right-4 z-50">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} mb-2 p-4 rounded-lg shadow-lg {% if category == 'error' %}bg-red-100 text-red-800 border border-red-300{% else %}bg-green-100 text-green-800 border border-green-300{% endif %}">
+                            {{ message }}
+                            <button onclick="this.parentElement.remove()" class="float-right font-bold">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Contenu principal -->
+        <main class="{% if session.user_id %}pt-4{% endif %}">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+
+
+
+
+
