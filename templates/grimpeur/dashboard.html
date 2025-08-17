@@ -1,0 +1,66 @@
+<!-- templates/grimpeur/dashboard.html - Dashboard grimpeur -->
+{% extends "base.html" %}
+{% block title %}Dashboard - Grimpeur{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="p-4 space-y-6">
+    <!-- Profil grimpeur -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Bienvenue</h2>
+        <div id="user-info" hx-get="/api/user/current" hx-trigger="load">
+            <!-- Chargé dynamiquement -->
+        </div>
+    </div>
+    
+    <!-- Compétitions du jour -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold mb-4">Compétitions aujourd'hui</h3>
+        <div id="competitions-today" 
+             hx-get="/api/grimpeur/competitions" 
+             hx-trigger="load"
+             class="space-y-4">
+            <div class="loading h-20"></div>
+        </div>
+    </div>
+    
+    <!-- Statistiques rapides -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-blue-50 p-4 rounded-lg text-center">
+            <div class="text-2xl font-bold text-blue-600" id="voies-validees">-</div>
+            <div class="text-sm text-gray-600">Voies validées</div>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg text-center">
+            <div class="text-2xl font-bold text-green-600" id="score-total">-</div>
+            <div class="text-sm text-gray-600">Score total</div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedCompetitionId = null;
+
+function selectCompetition(competitionId) {
+    selectedCompetitionId = competitionId;
+    sessionStorage.setItem('currentCompetitionId', competitionId);
+    window.location.href = '/grimpeur/voies';
+}
+
+// Charger les statistiques
+htmx.on('htmx:afterSettle', function(evt) {
+    if (evt.target.id === 'competitions-today') {
+        loadStats();
+    }
+});
+
+function loadStats() {
+    if (selectedCompetitionId) {
+        fetch(`/api/grimpeur/stats?competition_id=${selectedCompetitionId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('voies-validees').textContent = data.voies_validees || '0';
+                document.getElementById('score-total').textContent = data.score_total || '0';
+            });
+    }
+}
+</script>
+{% endblock %}
