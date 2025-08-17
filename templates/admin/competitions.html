@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion Compétitions - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-trophy text-warning"></i>
+                Gestion des Compétitions
+            </h2>
+            <p class="text-muted mb-0">Créez et gérez vos compétitions d'escalade</p>
+        </div>
+        <button class="btn btn-primary" onclick="showCompetitionModal()">
+            <i class="fas fa-plus"></i>
+            Nouvelle compétition
+        </button>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Rechercher</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Nom de la compétition...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tous les statuts</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="planifiee">Planifiée</option>
+                        <option value="terminee">Terminée</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Année</label>
+                    <select class="form-select" id="yearFilter">
+                        <option value="">Toutes les années</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                        <i class="fas fa-undo"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalCompetitions">0</h4>
+                            <p class="mb-0">Total compétitions</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-trophy fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activeCompetitions">0</h4>
+                            <p class="mb-0">En cours</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-play fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="plannedCompetitions">0</h4>
+                            <p class="mb-0">Planifiées</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="finishedCompetitions">0</h4>
+                            <p class="mb-0">Terminées</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des compétitions -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i>
+                Liste des compétitions
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Dates</th>
+                            <th>Statut</th>
+                            <th>Participants</th>
+                            <th>Voies</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="competitionsTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Compétition -->
+<div class="modal fade" id="competitionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trophy"></i>
+                    <span id="modalTitle">Nouvelle compétition</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="competitionForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nom de la compétition *</label>
+                            <input type="text" class="form-control" id="competitionNom" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="competitionDescription" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Date de début *</label>
+                            <input type="datetime-local" class="form-control" id="competitionDateDebut" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Date de fin *</label>
+                            <input type="datetime-local" class="form-control" id="competitionDateFin" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Lieu</label>
+                            <input type="text" class="form-control" id="competitionLieu" placeholder="Salle d'escalade...">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Type de compétition</label>
+                            <select class="form-select" id="competitionType">
+                                <option value="bloc">Bloc</option>
+                                <option value="voie">Voie</option>
+                                <option value="vitesse">Vitesse</option>
+                                <option value="mixte">Mixte</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre max de participants</label>
+                            <input type="number" class="form-control" id="competitionMaxParticipants" min="1">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Prix d'inscription (€)</label>
+                            <input type="number" class="form-control" id="competitionPrix" min="0" step="0.01">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="competitionPublique">
+                                <label class="form-check-label" for="competitionPublique">
+                                    Inscription publique
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Règlement/Notes</label>
+                            <textarea class="form-control" id="competitionReglement" rows="4" 
+                                      placeholder="Règlement spécifique, matériel requis, informations importantes..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="competitionId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmation Suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                    Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette compétition ?</p>
+                <p class="text-danger mb-0">
+                    <strong>Cette action est irréversible et supprimera :</strong><br>
+                    • Tous les participants inscrits<br>
+                    • Toutes les voies associées<br>
+                    • Toutes les validations<br>
+                    • Les classements
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash"></i>
+                    Supprimer définitivement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let competitions = [];
+let filteredCompetitions = [];
+let competitionToDelete = null;
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    loadCompetitions();
+    initFilters();
+    initForm();
+});
+
+// Initialisation des filtres
+function initFilters() {
+    // Événements de filtrage
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    document.getElementById('yearFilter').addEventListener('change', applyFilters);
+    
+    // Remplir les années
+    const currentYear = new Date().getFullYear();
+    const yearSelect = document.getElementById('yearFilter');
+    for (let year = currentYear + 1; year >= currentYear - 5; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+}
+
+// Initialisation du formulaire
+function initForm() {
+    document.getElementById('competitionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveCompetition();
+    });
+    
+    // Validation des dates
+    document.getElementById('competitionDateDebut').addEventListener('change', validateDates);
+    document.getElementById('competitionDateFin').addEventListener('change', validateDates);
+}
+
+// Chargement des compétitions
+function loadCompetitions() {
+    fetch('/api/competitions')
+        .then(response => response.json())
+        .then(data => {
+            competitions = data.competitions || [];
+            filteredCompetitions = [...competitions];
+            updateTable();
+            updateStats();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors du chargement des compétitions', 'danger');
+        });
+}
+
+// Mise à jour du tableau
+function updateTable() {
+    const tbody = document.getElementById('competitionsTableBody');
+    
+    if (filteredCompetitions.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4 text-muted">
+                    <i class="fas fa-trophy fa-3x mb-3 opacity-50"></i><br>
+                    Aucune compétition trouvée
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = filteredCompetitions.map(competition => `
+        <tr>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-trophy text-warning fa-lg"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">${escapeHtml(competition.nom)}</h6>
+                        ${competition.lieu ? `<small class="text-muted"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(competition.lieu)}</small>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <small class="text-muted">Du</small><br>
+                    <strong>${formatDateTime(competition.date_debut)}</strong>
+                </div>
+                <div class="mt-1">
+                    <small class="text-muted">Au</small><br>
+                    <strong>${formatDateTime(competition.date_fin)}</strong>
+                </div>
+            </td>
+            <td>
+                ${getStatusBadge(competition)}
+            </td>
+            <td>
+                <div class="text-center">
+                    <span class="fs-5 fw-bold">${competition.participants_count || 0}</span>
+                    ${competition.max_participants ? `<br><small class="text-muted">/ ${competition.max_participants}</small>` : ''}
+                </div>
+            </td>
+            <td>
+                <div class="text-center">
+                    <span class="fs-5 fw-bold">${competition.voies_count || 0}</span>
+                    <br><small class="text-muted">voies</small>
+                </div>
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editCompetition(${competition.id})" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewCompetition(${competition.id})" title="Voir détails">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="manageVoies(${competition.id})" title="Gérer les voies">
+                        <i class="fas fa-route"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="viewClassement(${competition.id})" title="Classements">
+                        <i class="fas fa-medal"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCompetition(${competition.id})" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Mise à jour des statistiques
+function updateStats() {
+    const stats = competitions.reduce((acc, comp) => {
+        const status = getCompetitionStatus(comp);
+        acc.total++;
+        acc[status]++;
+        return acc;
+    }, { total: 0, en_cours: 0, planifiee: 0, terminee: 0 });
+    
+    document.getElementById('totalCompetitions').textContent = stats.total;
+    document.getElementById('activeCompetitions').textContent = stats.en_cours;
+    document.getElementById('plannedCompetitions').textContent = stats.planifiee;
+    document.getElementById('finishedCompetitions').textContent = stats.terminee;
+}
+
+// Application des filtres
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const yearFilter = document.getElementById('yearFilter').value;
+    
+    filteredCompetitions = competitions.filter(competition => {
+        // Filtre de recherche
+        if (search && !competition.nom.toLowerCase().includes(search) && 
+            !competition.description?.toLowerCase().includes(search) &&
+            !competition.lieu?.toLowerCase().includes(search)) {
+            return false;
+        }
+        
+        // Filtre de statut
+        if (statusFilter && getCompetitionStatus(competition) !== statusFilter) {
+            return false;
+        }
+        
+        // Filtre d'année
+        if (yearFilter && new Date(competition.date_debut).getFullYear().toString() !== yearFilter) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    updateTable();
+}
+
+// Reset des filtres
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('yearFilter').value = '';
+    applyFilters();
+}
+
+// Affichage du modal de compétition
+function showCompetitionModal(competition = null) {
+    document.getElementById('modalTitle').textContent = competition ? 'Modifier la compétition' : 'Nouvelle compétition';
+    
+    if (competition) {
+        document.getElementById('competitionId').value = competition.id;
+        document.getElementById('competitionNom').value = competition.nom;
+        document.getElementById('competitionDescription').value = competition.description || '';
+        document.getElementById('competitionDateDebut').value = formatDateTimeInput(competition.date_debut);
+        document.getElementById('competitionDateFin').value = formatDateTimeInput(competition.date_fin);
+        document.getElementById('competitionLieu').value = competition.lieu || '';
+        document.getElementById('competitionType').value = competition.type || 'bloc';
+        document.getElementById('competitionMaxParticipants').value = competition.max_participants || '';
+        document.getElementById('competitionPrix').value = competition.prix || '';
+        document.getElementById('competitionPublique').checked = competition.inscription_publique;
+        document.getElementById('competitionReglement').value = competition.reglement || '';
+    } else {
+        document.getElementById('competitionForm').reset();
+        document.getElementById('competitionId').value = '';
+        
+        // Dates par défaut (aujourd'hui + 7 jours)
+        const now = new Date();
+        const future = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        document.getElementById('competitionDateDebut').value = formatDateTimeInput(now);
+        document.getElementById('competitionDateFin').value = formatDateTimeInput(future);
+    }
+    
+    new bootstrap.Modal(document.getElementById('competitionModal')).show();
+}
+
+// Édition d'une compétition
+function editCompetition(id) {
+    const competition = competitions.find(c => c.id === id);
+    if (competition) {
+        showCompetitionModal(competition);
+    }
+}
+
+// Sauvegarde d'une compétition
+function saveCompetition() {
+    const formData = {
+        nom: document.getElementById('competitionNom').value.trim(),
+        description: document.getElementById('competitionDescription').value.trim(),
+        date_debut: document.getElementById('competitionDateDebut').value,
+        date_fin: document.getElementById('competitionDateFin').value,
+        lieu: document.getElementById('competitionLieu').value.trim(),
+        type: document.getElementById('competitionType').value,
+        max_participants: document.getElementById('competitionMaxParticipants').value || null,
+        prix: document.getElementById('competitionPrix').value || null,
+        inscription_publique: document.getElementById('competitionPublique').checked,
+        reglement: document.getElementById('competitionReglement').value.trim()
+    };
+    
+    const competitionId = document.getElementById('competitionId').value;
+    const url = competitionId ? `/api/competitions/${competitionId}` : '/api/competitions';
+    const method = competitionId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(competitionId ? 'Compétition modifiée avec succès' : 'Compétition créée avec succès', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('competitionModal')).hide();
+            loadCompetitions();
+        } else {
+            showAlert(data.message || 'Erreur lors de la sauvegarde', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la sauvegarde', 'danger');
+    });
+}
+
+// Suppression d'une compétition
+function deleteCompetition(id) {
+    competitionToDelete = id;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function confirmDelete() {
+    if (!competitionToDelete) return;
+    
+    fetch(`/api/competitions/${competitionToDelete}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Compétition supprimée avec succès', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            loadCompetitions();
+        } else {
+            showAlert(data.message || 'Erreur lors de la suppression', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la suppression', 'danger');
+    })
+    .finally(() => {
+        competitionToDelete = null;
+    });
+}
+
+// Actions rapides
+function viewCompetition(id) {
+    window.location.href = `/admin/competition/${id}/details`;
+}
+
+function manageVoies(id) {
+    window.location.href = `/admin/voies?competition=${id}`;
+}
+
+function viewClassement(id) {
+    window.location.href = `/admin/classements?competition=${id}`;
+}
+
+// Utilitaires
+function getCompetitionStatus(competition) {
+    const now = new Date();
+    const debut = new Date(competition.date_debut);
+    const fin = new Date(competition.date_fin);
+    
+    if (now < debut) return 'planifiee';
+    if (now > fin) return 'terminee';
+    return 'en_cours';
+}
+
+function getStatusBadge(competition) {
+    const status = getCompetitionStatus(competition);
+    const badges = {
+        'en_cours': '<span class="badge bg-success">En cours</span>',
+        'planifiee': '<span class="badge bg-info">Planifiée</span>',
+        'terminee': '<span class="badge bg-secondary">Terminée</span>'
+    };
+    return badges[status];
+}
+
+function validateDates() {
+    const debut = document.getElementById('competitionDateDebut').value;
+    const fin = document.getElementById('competitionDateFin').value;
+    
+    if (debut && fin && new Date(debut) >= new Date(fin)) {
+        document.getElementById('competitionDateFin').setCustomValidity('La date de fin doit être après la date de début');
+    } else {
+        document.getElementById('competitionDateFin').setCustomValidity('');
+    }
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatDateTimeInput(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.table-responsive {
+    max-height: 70vh;
+}
+
+.btn-group .btn {
+    margin: 0 1px;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Animation pour les badges */
+.badge {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Style pour les cartes de stats */
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .btn-group .btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.8rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock %}
