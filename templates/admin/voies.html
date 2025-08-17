@@ -1,0 +1,978 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion Voies - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-route text-success"></i>
+                Gestion des Voies
+            </h2>
+            <p class="text-muted mb-0">Créez et gérez les voies de vos compétitions</p>
+        </div>
+        <div class="d-flex gap-2">
+            <select class="form-select" id="competitionSelect" style="width: auto;">
+                <option value="">Toutes les compétitions</option>
+            </select>
+            <button class="btn btn-primary" onclick="showVoieModal()">
+                <i class="fas fa-plus"></i>
+                Nouvelle voie
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Rechercher</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Nom de la voie...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Catégorie</label>
+                    <select class="form-select" id="categorieFilter">
+                        <option value="">Toutes</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Difficulté</label>
+                    <select class="form-select" id="difficulteFilter">
+                        <option value="">Toutes</option>
+                        <option value="1">1 - Débutant</option>
+                        <option value="2">2 - Facile</option>
+                        <option value="3">3 - Moyen</option>
+                        <option value="4">4 - Difficile</option>
+                        <option value="5">5 - Expert</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Points</label>
+                    <input type="number" class="form-control" id="pointsFilter" placeholder="Min points">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tous</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()" title="Reset filtres">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats rapides -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalVoies">0</h4>
+                            <p class="mb-0">Total voies</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-route fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activeVoies">0</h4>
+                            <p class="mb-0">Actives</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-play fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalValidations">0</h4>
+                            <p class="mb-0">Validations</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="avgPoints">0</h4>
+                            <p class="mb-0">Points moyens</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-star fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des voies -->
+    <div class="row" id="voiesGrid">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Voie -->
+<div class="modal fade" id="voieModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-route"></i>
+                    <span id="modalTitle">Nouvelle voie</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="voieForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <!-- Colonne gauche - Informations -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-info-circle"></i>
+                                Informations générales
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Nom de la voie *</label>
+                                <input type="text" class="form-control" id="voieNom" required>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Compétition *</label>
+                                    <select class="form-select" id="voieCompetition" required>
+                                        <option value="">Sélectionner...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Catégorie *</label>
+                                    <select class="form-select" id="voieCategorie" required>
+                                        <option value="">Sélectionner...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Difficulté *</label>
+                                    <select class="form-select" id="voieDifficulte" required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="1">1 - Débutant</option>
+                                        <option value="2">2 - Facile</option>
+                                        <option value="3">3 - Moyen</option>
+                                        <option value="4">4 - Difficile</option>
+                                        <option value="5">5 - Expert</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Points *</label>
+                                    <input type="number" class="form-control" id="voiePoints" min="1" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Couleur</label>
+                                    <input type="color" class="form-control form-control-color" id="voieCouleur" value="#007bff">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="voieDescription" rows="3"></textarea>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="voieActive" checked>
+                                        <label class="form-check-label" for="voieActive">
+                                            Voie active
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="voieBonus">
+                                        <label class="form-check-label" for="voieBonus">
+                                            Voie bonus
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Colonne droite - Image et zones -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-image"></i>
+                                Image et zones de validation
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Image de la voie</label>
+                                <input type="file" class="form-control" id="voieImage" accept="image/*">
+                                <div class="form-text">JPG, PNG max 5MB</div>
+                            </div>
+                            
+                            <!-- Zone d'affichage image -->
+                            <div class="image-container mb-3" id="imageContainer" style="display: none;">
+                                <div class="position-relative border rounded bg-light" style="min-height: 300px;">
+                                    <img id="voieImagePreview" class="img-fluid" style="max-height: 400px;">
+                                    <div id="zonesOverlay" class="position-absolute top-0 start-0 w-100 h-100"></div>
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="addZone()">
+                                        <i class="fas fa-plus"></i>
+                                        Ajouter une zone
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="clearZones()">
+                                        <i class="fas fa-trash"></i>
+                                        Supprimer toutes les zones
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        Cliquez sur l'image pour ajouter des zones de validation
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Liste des zones -->
+                            <div id="zonesList"></div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="voieId">
+                    <input type="hidden" id="voieZones" value="[]">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let voies = [];
+let competitions = [];
+let categories = [];
+let filteredVoies = [];
+let zones = [];
+let nextZoneId = 1;
+let currentImage = null;
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    initFilters();
+    initForm();
+    initImageEditor();
+});
+
+// Chargement des données
+function loadData() {
+    Promise.all([
+        fetch('/api/voies').then(r => r.json()),
+        fetch('/api/competitions').then(r => r.json()),
+        fetch('/api/categories').then(r => r.json())
+    ])
+    .then(([voiesData, competitionsData, categoriesData]) => {
+        voies = voiesData.voies || [];
+        competitions = competitionsData.competitions || [];
+        categories = categoriesData.categories || [];
+        
+        populateSelects();
+        filteredVoies = [...voies];
+        updateGrid();
+        updateStats();
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors du chargement des données', 'danger');
+    });
+}
+
+// Population des selects
+function populateSelects() {
+    // Compétitions dans le filtre
+    const competitionSelect = document.getElementById('competitionSelect');
+    competitionSelect.innerHTML = '<option value="">Toutes les compétitions</option>';
+    competitions.forEach(comp => {
+        competitionSelect.innerHTML += `<option value="${comp.id}">${comp.nom}</option>`;
+    });
+    
+    // Compétitions dans le modal
+    const voieCompetition = document.getElementById('voieCompetition');
+    voieCompetition.innerHTML = '<option value="">Sélectionner...</option>';
+    competitions.forEach(comp => {
+        voieCompetition.innerHTML += `<option value="${comp.id}">${comp.nom}</option>`;
+    });
+    
+    // Catégories dans le filtre
+    const categorieFilter = document.getElementById('categorieFilter');
+    categorieFilter.innerHTML = '<option value="">Toutes</option>';
+    categories.forEach(cat => {
+        categorieFilter.innerHTML += `<option value="${cat.id}">${cat.nom}</option>`;
+    });
+    
+    // Catégories dans le modal
+    const voieCategorie = document.getElementById('voieCategorie');
+    voieCategorie.innerHTML = '<option value="">Sélectionner...</option>';
+    categories.forEach(cat => {
+        voieCategorie.innerHTML += `<option value="${cat.id}">${cat.nom}</option>`;
+    });
+}
+
+// Initialisation des filtres
+function initFilters() {
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('competitionSelect').addEventListener('change', applyFilters);
+    document.getElementById('categorieFilter').addEventListener('change', applyFilters);
+    document.getElementById('difficulteFilter').addEventListener('change', applyFilters);
+    document.getElementById('pointsFilter').addEventListener('input', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+}
+
+// Initialisation du formulaire
+function initForm() {
+    document.getElementById('voieForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveVoie();
+    });
+    
+    // Auto-calcul des points selon la difficulté
+    document.getElementById('voieDifficulte').addEventListener('change', function() {
+        const difficulte = parseInt(this.value);
+        if (difficulte) {
+            const points = difficulte * 100 + (difficulte - 1) * 50;
+            document.getElementById('voiePoints').value = points;
+        }
+    });
+}
+
+// Initialisation de l'éditeur d'image
+function initImageEditor() {
+    const imageInput = document.getElementById('voieImage');
+    const imagePreview = document.getElementById('voieImagePreview');
+    const imageContainer = document.getElementById('imageContainer');
+    
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = e.target.result;
+                imagePreview.src = currentImage;
+                imageContainer.style.display = 'block';
+                clearZones();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Clic sur l'image pour ajouter des zones
+    imagePreview.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
+        const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
+        
+        addZoneAtPosition(x, y);
+    });
+}
+
+// Mise à jour de la grille
+function updateGrid() {
+    const grid = document.getElementById('voiesGrid');
+    
+    if (filteredVoies.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-route fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucune voie trouvée</h5>
+                <p class="text-muted">Créez votre première voie ou modifiez vos filtres</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = filteredVoies.map(voie => createVoieCard(voie)).join('');
+}
+
+// Création d'une carte de voie
+function createVoieCard(voie) {
+    const competition = competitions.find(c => c.id === voie.competition_id);
+    const categorie = categories.find(c => c.id === voie.categorie_id);
+    
+    return `
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 voie-card" style="border-left: 4px solid ${voie.couleur || '#007bff'}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">${escapeHtml(voie.nom)}</h6>
+                    <div class="d-flex gap-1">
+                        ${voie.active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}
+                        ${voie.bonus ? '<span class="badge bg-warning">Bonus</span>' : ''}
+                    </div>
+                </div>
+                
+                ${voie.image_url ? `
+                <div class="position-relative">
+                    <img src="${voie.image_url}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    ${voie.zones_count ? `<span class="position-absolute top-0 end-0 badge bg-info m-2">${voie.zones_count} zones</span>` : ''}
+                </div>
+                ` : `
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                `}
+                
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Compétition</small><br>
+                            <strong class="small">${competition ? escapeHtml(competition.nom) : 'N/A'}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Catégorie</small><br>
+                            <strong class="small">${categorie ? escapeHtml(categorie.nom) : 'N/A'}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <small class="text-muted">Difficulté</small><br>
+                            <span class="badge bg-primary">${getDifficultyText(voie.difficulte)}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Points</small><br>
+                            <span class="fw-bold text-success">${voie.points}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Validations</small><br>
+                            <span class="fw-bold">${voie.validations_count || 0}</span>
+                        </div>
+                    </div>
+                    
+                    ${voie.description ? `<p class="card-text small text-muted">${escapeHtml(voie.description)}</p>` : ''}
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editVoie(${voie.id})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="viewVoie(${voie.id})" title="Voir détails">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="editZones(${voie.id})" title="Éditer zones">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="copyVoie(${voie.id})" title="Dupliquer">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteVoie(${voie.id})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Mise à jour des statistiques
+function updateStats() {
+    const activeVoies = voies.filter(v => v.active);
+    const totalValidations = voies.reduce((sum, v) => sum + (v.validations_count || 0), 0);
+    const avgPoints = voies.length > 0 ? Math.round(voies.reduce((sum, v) => sum + v.points, 0) / voies.length) : 0;
+    
+    document.getElementById('totalVoies').textContent = voies.length;
+    document.getElementById('activeVoies').textContent = activeVoies.length;
+    document.getElementById('totalValidations').textContent = totalValidations;
+    document.getElementById('avgPoints').textContent = avgPoints;
+}
+
+// Application des filtres
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const competitionId = document.getElementById('competitionSelect').value;
+    const categorieId = document.getElementById('categorieFilter').value;
+    const difficulte = document.getElementById('difficulteFilter').value;
+    const minPoints = document.getElementById('pointsFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    filteredVoies = voies.filter(voie => {
+        // Filtre de recherche
+        if (search && !voie.nom.toLowerCase().includes(search) && 
+            !voie.description?.toLowerCase().includes(search)) {
+            return false;
+        }
+        
+        // Filtre compétition
+        if (competitionId && voie.competition_id.toString() !== competitionId) {
+            return false;
+        }
+        
+        // Filtre catégorie
+        if (categorieId && voie.categorie_id.toString() !== categorieId) {
+            return false;
+        }
+        
+        // Filtre difficulté
+        if (difficulte && voie.difficulte.toString() !== difficulte) {
+            return false;
+        }
+        
+        // Filtre points minimum
+        if (minPoints && voie.points < parseInt(minPoints)) {
+            return false;
+        }
+        
+        // Filtre statut
+        if (status === 'active' && !voie.active) {
+            return false;
+        }
+        if (status === 'inactive' && voie.active) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    updateGrid();
+}
+
+// Reset des filtres
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('competitionSelect').value = '';
+    document.getElementById('categorieFilter').value = '';
+    document.getElementById('difficulteFilter').value = '';
+    document.getElementById('pointsFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    applyFilters();
+}
+
+// Affichage du modal de voie
+function showVoieModal(voie = null) {
+    document.getElementById('modalTitle').textContent = voie ? 'Modifier la voie' : 'Nouvelle voie';
+    
+    if (voie) {
+        // Édition
+        document.getElementById('voieId').value = voie.id;
+        document.getElementById('voieNom').value = voie.nom;
+        document.getElementById('voieCompetition').value = voie.competition_id;
+        document.getElementById('voieCategorie').value = voie.categorie_id;
+        document.getElementById('voieDifficulte').value = voie.difficulte;
+        document.getElementById('voiePoints').value = voie.points;
+        document.getElementById('voieCouleur').value = voie.couleur || '#007bff';
+        document.getElementById('voieDescription').value = voie.description || '';
+        document.getElementById('voieActive').checked = voie.active;
+        document.getElementById('voieBonus').checked = voie.bonus;
+        
+        if (voie.image_url) {
+            document.getElementById('voieImagePreview').src = voie.image_url;
+            document.getElementById('imageContainer').style.display = 'block';
+            currentImage = voie.image_url;
+        }
+        
+        // Charger les zones existantes
+        loadVoieZones(voie.id);
+    } else {
+        // Nouvelle voie
+        document.getElementById('voieForm').reset();
+        document.getElementById('voieId').value = '';
+        document.getElementById('voieCouleur').value = '#007bff';
+        document.getElementById('voieActive').checked = true;
+        document.getElementById('imageContainer').style.display = 'none';
+        clearZones();
+        currentImage = null;
+    }
+    
+    new bootstrap.Modal(document.getElementById('voieModal')).show();
+}
+
+// Gestion des zones
+function addZoneAtPosition(x, y) {
+    const zone = {
+        id: nextZoneId++,
+        x: parseFloat(x),
+        y: parseFloat(y),
+        nom: `Zone ${zones.length + 1}`,
+        points: 50
+    };
+    
+    zones.push(zone);
+    renderZones();
+    updateZonesList();
+}
+
+function addZone() {
+    addZoneAtPosition(50, 50); // Position par défaut au centre
+}
+
+function removeZone(zoneId) {
+    zones = zones.filter(z => z.id !== zoneId);
+    renderZones();
+    updateZonesList();
+}
+
+function clearZones() {
+    zones = [];
+    renderZones();
+    updateZonesList();
+}
+
+function renderZones() {
+    const overlay = document.getElementById('zonesOverlay');
+    overlay.innerHTML = zones.map(zone => `
+        <div class="zone-marker" style="
+            position: absolute;
+            left: ${zone.x}%;
+            top: ${zone.y}%;
+            width: 30px;
+            height: 30px;
+            margin-left: -15px;
+            margin-top: -15px;
+            background: rgba(255, 0, 0, 0.7);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        " onclick="removeZone(${zone.id})" title="Cliquer pour supprimer">
+            <span style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+            ">${zone.id}</span>
+        </div>
+    `).join('');
+}
+
+function updateZonesList() {
+    const container = document.getElementById('zonesList');
+    
+    if (zones.length === 0) {
+        container.innerHTML = '<p class="text-muted small">Aucune zone définie</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <h6 class="mt-3">Zones de validation (${zones.length})</h6>
+        <div class="list-group list-group-flush">
+            ${zones.map(zone => `
+                <div class="list-group-item p-2">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-1">
+                            <div class="zone-indicator" style="
+                                width: 20px; height: 20px; background: rgba(255,0,0,0.7);
+                                border: 2px solid white; border-radius: 50%;
+                                display: flex; align-items: center; justify-content: center;
+                                color: white; font-size: 10px; font-weight: bold;
+                            ">${zone.id}</div>
+                        </div>
+                        <div class="col-5">
+                            <input type="text" class="form-control form-control-sm" 
+                                   value="${zone.nom}" 
+                                   onchange="updateZoneName(${zone.id}, this.value)">
+                        </div>
+                        <div class="col-3">
+                            <input type="number" class="form-control form-control-sm" 
+                                   value="${zone.points}" min="1"
+                                   onchange="updateZonePoints(${zone.id}, this.value)">
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeZone(${zone.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function updateZoneName(zoneId, name) {
+    const zone = zones.find(z => z.id === zoneId);
+    if (zone) zone.nom = name;
+}
+
+function updateZonePoints(zoneId, points) {
+    const zone = zones.find(z => z.id === zoneId);
+    if (zone) zone.points = parseInt(points) || 0;
+}
+
+function loadVoieZones(voieId) {
+    fetch(`/api/voies/${voieId}/zones`)
+        .then(response => response.json())
+        .then(data => {
+            zones = data.zones || [];
+            nextZoneId = Math.max(...zones.map(z => z.id), 0) + 1;
+            renderZones();
+            updateZonesList();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            zones = [];
+        });
+}
+
+// Actions sur les voies
+function editVoie(id) {
+    const voie = voies.find(v => v.id === id);
+    if (voie) {
+        showVoieModal(voie);
+    }
+}
+
+function viewVoie(id) {
+    window.open(`/voies/${id}/preview`, '_blank');
+}
+
+function editZones(id) {
+    const voie = voies.find(v => v.id === id);
+    if (voie) {
+        showVoieModal(voie);
+        // Focus sur l'onglet zones
+        setTimeout(() => {
+            if (voie.image_url) {
+                document.getElementById('imageContainer').scrollIntoView({ behavior: 'smooth' });
+            }
+        }, 500);
+    }
+}
+
+function copyVoie(id) {
+    const voie = voies.find(v => v.id === id);
+    if (voie) {
+        const newVoie = { ...voie };
+        newVoie.nom += ' (Copie)';
+        delete newVoie.id;
+        showVoieModal(newVoie);
+    }
+}
+
+function deleteVoie(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette voie ? Cette action supprimera aussi toutes les validations associées.')) {
+        fetch(`/api/voies/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Voie supprimée avec succès', 'success');
+                loadData();
+            } else {
+                showAlert(data.message || 'Erreur lors de la suppression', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la suppression', 'danger');
+        });
+    }
+}
+
+// Sauvegarde d'une voie
+function saveVoie() {
+    const formData = new FormData();
+    const voieId = document.getElementById('voieId').value;
+    
+    // Données de base
+    formData.append('nom', document.getElementById('voieNom').value.trim());
+    formData.append('competition_id', document.getElementById('voieCompetition').value);
+    formData.append('categorie_id', document.getElementById('voieCategorie').value);
+    formData.append('difficulte', document.getElementById('voieDifficulte').value);
+    formData.append('points', document.getElementById('voiePoints').value);
+    formData.append('couleur', document.getElementById('voieCouleur').value);
+    formData.append('description', document.getElementById('voieDescription').value.trim());
+    formData.append('active', document.getElementById('voieActive').checked);
+    formData.append('bonus', document.getElementById('voieBonus').checked);
+    formData.append('zones', JSON.stringify(zones));
+    
+    // Image
+    const imageFile = document.getElementById('voieImage').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+    
+    const url = voieId ? `/api/voies/${voieId}` : '/api/voies';
+    const method = voieId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(voieId ? 'Voie modifiée avec succès' : 'Voie créée avec succès', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('voieModal')).hide();
+            loadData();
+        } else {
+            showAlert(data.message || 'Erreur lors de la sauvegarde', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la sauvegarde', 'danger');
+    });
+}
+
+// Utilitaires
+function getDifficultyText(level) {
+    const levels = {
+        1: '1 - Débutant',
+        2: '2 - Facile', 
+        3: '3 - Moyen',
+        4: '4 - Difficile',
+        5: '5 - Expert'
+    };
+    return levels[level] || level;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.voie-card {
+    transition: all 0.3s ease;
+}
+
+.voie-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.image-container img {
+    cursor: crosshair;
+}
+
+.zone-marker {
+    transition: all 0.2s ease;
+}
+
+.zone-marker:hover {
+    transform: scale(1.2);
+}
+
+.zone-indicator {
+    flex-shrink: 0;
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.125) !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .modal-xl {
+        max-width: 95%;
+    }
+    
+    .zone-marker {
+        width: 25px;
+        height: 25px;
+        margin-left: -12px;
+        margin-top: -12px;
+    }
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.voie-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+</style>
+{% endblock %}
