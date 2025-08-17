@@ -39,7 +39,7 @@ Fonctionnalités:
 
 4. Structure des fichiers:
    ```
-    climbing_app/
+    climbing-app/
     ├── app.py                          # Application Flask principale
     ├── models.py                       # Modèles de base de données
     ├── routes.py                       # Routes API
