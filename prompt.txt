@@ -1,0 +1,136 @@
+Je souhaiterai que tu me développes une application web.
+Les technologies à utiliser sont:
+back-end: python3, flask, flask_sqlalchemy, sqlite, blueprint.
+front-end: html, javascript, htmx et framework necessaires...
+style: tailwindcss via <script src="https://cdn.tailwindcss.com"></script>
+
+Cela devra être une application responsive (mobile-first).
+C'est une application pour des compétitions d'escalade de difficulté indoor.
+
+Nous aurons 3 types d'utilisateurs (Admin, Ouvreur, Grimpeur)
+
+Les Admins ont la possibilité de:
+-Créer une compétition et accès total au CRUD pour les compétitions.
+-Accès total CRUD grimpeur
+-Accès total CRUD ouvreur
+-Accès total CRUD voie
+-Accès total CRUD circle
+-Accès total CRUD level
+-Accès total CRUD validation_grimpeur
+-Accès total CRUD catégorie
+
+Les Ouvreurs ont la possibilité:
+-Créer une compétition et accès total au CRUD pour les compétitions.
+-Accès total CRUD grimpeur
+-Accès total CRUD voie
+-Accès total CRUD circle
+-Accès total CRUD validation_grimpeur
+
+Les Grimpeurs ont la possibilité:
+-Sélectionner une voie
+-Accès total sur leur propre validation_grimpeur
+-Inscription compétition.
+
+Données nécessaires pour tous les utilisateurs (Admin, Ouvreur, Grimpeur):
+-Nom, Prénom, date de naissance, téléphone, email, sexe, role (admin, grimpeur, ouvreur).
+
+Compétition (date_creation, date_debut, date_fin, nombre de participant_maximum, is_open, inscrition_is_open, liste_catégories, nom de la compétition)
+
+Voie (date_création, image_path, level, nom, commentaire)
+
+Circle (x, y, id_voie, ordre, radius) les coordonnées (x,y) devront être en pourcentage des dimensions de la photo pour s'adapter au zoom et pan.
+
+Level (nom, score)
+
+Categorie (annee_min, annee_max, genre, nom)
+
+Validation_Grimpeur (datetime_création, id_grimpeur, id_voie, id_competition, id_circle)
+
+Pour admin menu hamburger toujours visible en haut à gauche:
+Utilisateurs; dashboard de tout les utilisateur
+Compétitions: dashboard des compétitions
+Level: dashboard level
+Voie: dashboard voie
+Catégorie: dashboard catégorie
+
+Pour ouvreur menu hamburger toujours visible en haut à gauche:
+Utilisateurs; dashboard de tout les utilisateur
+Compétitions: dashboard des compétitions
+Voie: dashboard voie
+
+Pour les catégories:
+Un utilisateur ne peut êtreque que: masculin ou féminin
+Mais il existe aussi la catégorie mixte qui accèpte masculin et féminin (valable pour les compétitions)
+
+Fonctionnement:
+Lors de la création d'une compétition:
+nom de la compétition
+choisir une date de début et de fin avec les heures
+sélectionner les catégories concernées par la compétition.
+case à cocher pour (ouvert à l'inscription, compétition ouverte)
+selection d'un nombre de participant maximum autotrisé.
+
+Une fois la compétition ouverte à l'inscription il faut un lien pour que les participants puissent s'inscrire en ligne à la compétition concernée, en entrant toute les données necessaires (voir Données nécessaires pour tous les utilisateurs)
+Tout utilisateur inscrit doit être stocké dans une base générale et mis à jour si des données ont changé (email, téléphone)
+Un grimpeur ne peut s'inscrire que si sa catégorie est bien dans la liste de la catégorie de la compétition. (catégorie verifié par rapport: année de naissance, sexe)
+Les admin et ouvreurs doivent avoir accès à une interface pour pouvoir accèder aux CRUD des grimpeurs d'une compétition.
+L'admin doit aussi avoir une interface pour accèder aux CRUD générale de tout les utilisateurs.
+Une fois la compétition en mode ouverte, il n'est plus possible de modifier une voie ni les circles.
+Les grimpeurs n'aurons accès à l'application que le jour de la compétition (donc accès à leur fiche grimpeur que ce jour là).
+
+Une fois un compétition créer et futur (date de début >= date en cours) on doit pouvoir ajouter/suprimer des voies (selectionner dans le voie existante)
+
+Interface Voie (toujours responsive et mobile-first):
+Avoir une liste des voie existante avec la possibilité de modifier, suprimer et créer.
+Pour créer une voie:
+On doit pouvoir uploader une photo.
+Lui donner un nom, lui attribué un level (dans une liste de level déja créée par admin afficher seulement le nom du level pas son score).
+Une fois la photo uploader, il faut pouvoir zoomer/dézoomer dans l'image ainsi que pouvoir se déplacer à l'intérieur.
+Sur la photo il faut pouvoir déposer des cercles transparents à contour rouge visible. 
+Ces cercles doivent pourvoir être déplacé et redimensionné.
+Dans chaque cercle de façon dynamique on doit afficher leur ordre (ordre du plus bas vers le plus haut).
+Possibilité une fois sélectionner de modifier sa position, sa taille ou de le suprimer.
+Un bouton valider pour valider la voie ainsi que tout les cercles en base de données.
+Un bouton réintialiser qui efface tout les cercles et remet l'image dans sa position original.
+Un bouton annuler qui remet la voie et les cercles dans la configuration en base de données.
+
+Pour la modification d'une voie, il ne doit pas être possible de modifier la photo.
+
+
+Chaque utilisateur à un code de connexion (composé de 6 chiffres) généré par le hash de (nom, prenom, année de naissance, genre).
+
+Les Grimpeurs pourrons se connecter à l'application avec leur code connexion qui leur seront donné par les ouvreurs le jour de la compétition.
+
+
+Le jour de la compétition, les grimpeurs auront accès à une page de connexion.
+Une fois connecté:
+Une barre menu hamburger toujours visible en haut à gauche (profile, voies, classement, compétitions, grimpeurs).
+	-Profile dashboard profile de l'utilisateur.
+	-compétitions dashboard de la compétition avec le nombre total d'inscrit et le nombre d'inscrit pas catégorie
+	-voies dashboard des voies
+	-classement dashboard avec le classement par catégorie (disponible qu'une fois la compétition terminée)
+	-grimpeurs liste des grimpeurs par catégorie
+
+Pour le dashboard Voie:
+une interface avec la liste de toute les voies disponible, avec pour chaque voie, une miniature de la photo, nom de la voie et level de la voie ainsi qu'un repère visuel pour voir si le grimpeur à une Validation_Grimpeur sur a voie concernée.
+Lorsque le grimpeur sélectionne une voie il accède à une nouvelle interface.
+Il doit pouvoir zoomer/dézoomer dans la photo et les cercles placé pas les ouvreurs doivent être visible (transparent avec contour rouge mais pas l'ordre visible à l'intérieur).
+Les grimpeurs doivent pouvoir sélectionner un cercle (un seul à la fois) dans l'interface lors de zoom/pan les boutons valider et annuler devrons toujours être visible ainsi que le menu hamburger.
+Lors de la validation on affiche un bouton de confirmation et on enregistre le Validation_Grimpeur en base.
+
+Pour le classement une fois la ccompétition terminée les ouvreurs et admin doivent pouvoir permettre aux grimpeur d'acceder aux pages classement par catégorie.
+Les classement sont calculé par catégories (pour chaque grimpeur somme des points par voie)
+score d'une voie:
+voie.level.score/Validation_Grimpeur.circle.ordre.
+
+Pour les pages classements, il faut une page pour mobile mais aussi une page dynamique avec carroussel pour pouvoir être affiché sur écran pour le publique présent dans la salle.
+
+
+Coté Ouvreur Admin il faudrait aussi une interface pour qu'ils puissent fair la ValidationGrimpeur d'un grimpeur à sa place si celui ci ne dispose pas de téléphone mobile.
+
+Il faudrait aussi qu'un grimpeur puisse se connecter avec plusieur identifiant (dans le cas ou c'est une compétition enfant souvent un parent gère plusieurs enfants et valide leur voies.
+
+
+Il faut une interface ergonomique simple épuré.
+As-tu assez de données pour réaliser le projet et est-ce assez précis pour toi?
+Si tout es calir peux-tu me fournir le projet complet.
