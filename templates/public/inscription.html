@@ -1,0 +1,933 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription - Climbing Competition{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">
+            <i class="fas fa-user-plus"></i>
+            Inscription à la compétition
+        </h1>
+        <p class="lead text-muted">
+            Rejoignez-nous pour une expérience d'escalade inoubliable !
+        </p>
+    </div>
+
+    <!-- Informations de la compétition -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy"></i>
+                        Informations de la compétition
+                    </h5>
+                </div>
+                <div class="card-body" id="competitionInfo">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Étapes d'inscription -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Progress bar -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" id="progressBar" role="progressbar" style="width: 33%"></div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="step active" id="step1Indicator">
+                                <i class="fas fa-user-circle fa-2x mb-2"></i>
+                                <p class="mb-0 small fw-bold">Informations personnelles</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="step" id="step2Indicator">
+                                <i class="fas fa-tags fa-2x mb-2"></i>
+                                <p class="mb-0 small">Catégorie</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="step" id="step3Indicator">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <p class="mb-0 small">Confirmation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire d'inscription -->
+            <div class="card">
+                <div class="card-body p-4">
+                    <form id="inscriptionForm">
+                        <!-- Étape 1: Informations personnelles -->
+                        <div class="step-content" id="step1">
+                            <h4 class="mb-4">
+                                <i class="fas fa-user-circle text-primary"></i>
+                                Vos informations personnelles
+                            </h4>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Prénom *</label>
+                                    <input type="text" class="form-control form-control-lg" id="prenom" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nom *</label>
+                                    <input type="text" class="form-control form-control-lg" id="nom" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" class="form-control form-control-lg" id="email" required>
+                                    <div class="form-text">Votre code de connexion vous sera envoyé par email</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control form-control-lg" id="telephone">
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label class="form-label">Date de naissance *</label>
+                                    <input type="date" class="form-control form-control-lg" id="dateNaissance" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Genre</label>
+                                    <select class="form-select form-select-lg" id="genre">
+                                        <option value="">Préférer ne pas répondre</option>
+                                        <option value="M">Masculin</option>
+                                        <option value="F">Féminin</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Niveau d'escalade</label>
+                                    <select class="form-select form-select-lg" id="niveau">
+                                        <option value="">Sélectionner...</option>
+                                        <option value="debutant">Débutant</option>
+                                        <option value="intermediaire">Intermédiaire</option>
+                                        <option value="confirme">Confirmé</option>
+                                        <option value="expert">Expert</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Club/Équipe</label>
+                                    <input type="text" class="form-control form-control-lg" id="club" placeholder="Nom de votre club ou équipe">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Licence FFME</label>
+                                    <input type="text" class="form-control form-control-lg" id="licence" placeholder="Numéro de licence (optionnel)">
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label">Commentaires/Besoins particuliers</label>
+                                    <textarea class="form-control" id="commentaires" rows="3" placeholder="Allergies, besoins spéciaux, remarques..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Étape 2: Choix de la catégorie -->
+                        <div class="step-content" id="step2" style="display: none;">
+                            <h4 class="mb-4">
+                                <i class="fas fa-tags text-primary"></i>
+                                Choisissez votre catégorie
+                            </h4>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Les catégories sont suggérées selon vos informations. Vous pouvez choisir une catégorie différente si vous le souhaitez.
+                            </div>
+                            
+                            <div id="categoriesContainer">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement des catégories...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Étape 3: Confirmation -->
+                        <div class="step-content" id="step3" style="display: none;">
+                            <h4 class="mb-4">
+                                <i class="fas fa-check-circle text-primary"></i>
+                                Confirmez votre inscription
+                            </h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Vos informations</h6>
+                                        </div>
+                                        <div class="card-body" id="summaryInfo">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Catégorie sélectionnée</h6>
+                                        </div>
+                                        <div class="card-body" id="summaryCategory">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Prix -->
+                                    <div class="card mt-3 border-success">
+                                        <div class="card-body text-center">
+                                            <h5 class="text-success mb-0">
+                                                Prix total: <span id="prixTotal">0 €</span>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Conditions -->
+                            <div class="mt-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="acceptPhotos">
+                                    <label class="form-check-label" for="acceptPhotos">
+                                        J'autorise la prise et la diffusion de photos/vidéos me concernant
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons de navigation -->
+                        <div class="d-flex justify-content-between mt-5">
+                            <button type="button" class="btn btn-secondary btn-lg" id="btnPrevious" onclick="previousStep()" style="display: none;">
+                                <i class="fas fa-arrow-left"></i>
+                                Précédent
+                            </button>
+                            <div class="ms-auto">
+                                <button type="button" class="btn btn-primary btn-lg" id="btnNext" onclick="nextStep()">
+                                    Suivant
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                                <button type="submit" class="btn btn-success btn-lg" id="btnSubmit" style="display: none;">
+                                    <i class="fas fa-check"></i>
+                                    Confirmer l'inscription
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conditions -->
+<div class="modal fade" id="conditionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conditions générales</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="conditionsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Succès -->
+<div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle"></i>
+                    Inscription confirmée !
+                </h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                    <h4>Félicitations !</h4>
+                    <p class="lead">Votre inscription a été enregistrée avec succès.</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-key"></i> Votre code de connexion</h6>
+                    <p class="mb-0">
+                        Un code de connexion à 6 chiffres vous a été envoyé par email.<br>
+                        Vous en aurez besoin le jour de la compétition pour accéder à votre espace grimpeur.
+                    </p>
+                </div>
+                
+                <div class="row text-start">
+                    <div class="col-6">
+                        <strong>Nom :</strong><br>
+                        <span id="confirmNom"></span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Catégorie :</strong><br>
+                        <span id="confirmCategorie"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary btn-lg" onclick="window.location.href='/'">
+                    <i class="fas fa-home"></i>
+                    Retour à l'accueil
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-lg" onclick="window.location.href='/public/classement'">
+                    <i class="fas fa-trophy"></i>
+                    Voir les classements
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let currentStep = 1;
+let competition = null;
+let categories = [];
+let selectedCategory = null;
+let userAge = null;
+let userGenre = null;
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    loadCompetitionInfo();
+    loadConditions();
+    initFormValidation();
+    
+    // Calcul automatique de l'âge
+    document.getElementById('dateNaissance').addEventListener('change', function() {
+        calculateAge();
+        suggestCategories();
+    });
+    
+    // Suggestion de catégories selon le genre
+    document.getElementById('genre').addEventListener('change', function() {
+        userGenre = this.value;
+        suggestCategories();
+    });
+});
+
+// Chargement des informations de compétition
+function loadCompetitionInfo() {
+    fetch('/api/competition/current')
+        .then(response => response.json())
+        .then(data => {
+            competition = data.competition;
+            displayCompetitionInfo();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('competitionInfo').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Erreur lors du chargement des informations de la compétition.
+                </div>
+            `;
+        });
+}
+
+function displayCompetitionInfo() {
+    if (!competition) {
+        document.getElementById('competitionInfo').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i>
+                Aucune compétition active pour le moment.
+            </div>
+        `;
+        return;
+    }
+    
+    document.getElementById('competitionInfo').innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-trophy text-warning"></i> ${escapeHtml(competition.nom)}</h6>
+                <p class="mb-2">${competition.description ? escapeHtml(competition.description) : ''}</p>
+                ${competition.lieu ? `<p class="mb-1"><i class="fas fa-map-marker-alt text-muted"></i> ${escapeHtml(competition.lieu)}</p>` : ''}
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">Début</small><br>
+                        <strong>${formatDateTime(competition.date_debut)}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Fin</small><br>
+                        <strong>${formatDateTime(competition.date_fin)}</strong>
+                    </div>
+                </div>
+                ${competition.prix ? `
+                    <div class="mt-2">
+                        <small class="text-muted">Prix de base</small><br>
+                        <strong class="text-success">${competition.prix} €</strong>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// Chargement des conditions
+function loadConditions() {
+    fetch('/api/conditions')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('conditionsContent').innerHTML = data.conditions || 'Conditions générales non définies.';
+        })
+        .catch(error => {
+            document.getElementById('conditionsContent').innerHTML = 'Erreur lors du chargement des conditions.';
+        });
+}
+
+// Calcul de l'âge
+function calculateAge() {
+    const birthDate = new Date(document.getElementById('dateNaissance').value);
+    const today = new Date();
+    userAge = today.getFullYear() - birthDate.getFullYear();
+    
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        userAge--;
+    }
+}
+
+// Chargement des catégories
+function loadCategories() {
+    if (categories.length > 0) {
+        displayCategories();
+        return;
+    }
+    
+    fetch('/api/categories/public')
+        .then(response => response.json())
+        .then(data => {
+            categories = data.categories || [];
+            displayCategories();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('categoriesContainer').innerHTML = `
+                <div class="alert alert-danger">
+                    Erreur lors du chargement des catégories.
+                </div>
+            `;
+        });
+}
+
+// Affichage des catégories
+function displayCategories() {
+    const container = document.getElementById('categoriesContainer');
+    
+    if (categories.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i>
+                Aucune catégorie disponible pour l'inscription.
+            </div>
+        `;
+        return;
+    }
+    
+    // Trier les catégories (suggérées en premier)
+    const sortedCategories = [...categories].sort((a, b) => {
+        const aEligible = isCategoryEligible(a);
+        const bEligible = isCategoryEligible(b);
+        
+        if (aEligible && !bEligible) return -1;
+        if (!aEligible && bEligible) return 1;
+        
+        return (a.ordre || 0) - (b.ordre || 0);
+    });
+    
+    container.innerHTML = sortedCategories.map(category => {
+        const isEligible = isCategoryEligible(category);
+        const isAvailable = !category.max_participants || (category.participants_count || 0) < category.max_participants;
+        
+        return `
+            <div class="card mb-3 category-card ${isEligible ? 'border-success' : ''} ${!isAvailable ? 'border-danger' : ''}" 
+                 onclick="selectCategory(${category.id})" 
+                 data-category-id="${category.id}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <h6 class="mb-0 me-2">${escapeHtml(category.nom)}</h6>
+                                ${isEligible ? '<span class="badge bg-success">Suggérée</span>' : ''}
+                                ${!isAvailable ? '<span class="badge bg-danger">Complète</span>' : ''}
+                            </div>
+                            
+                            ${category.description ? `<p class="text-muted small mb-2">${escapeHtml(category.description)}</p>` : ''}
+                            
+                            <div class="row g-2">
+                                ${getCategoryInfo(category)}
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="category" 
+                                       value="${category.id}" ${!isAvailable ? 'disabled' : ''}>
+                            </div>
+                            ${category.prix ? `<div class="mt-2"><strong class="text-success">${category.prix} €</strong></div>` : '<div class="mt-2 text-muted">Gratuit</div>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getCategoryInfo(category) {
+    let info = [];
+    
+    if (category.age_min || category.age_max) {
+        const ageText = category.age_min && category.age_max ? 
+            `${category.age_min}-${category.age_max} ans` :
+            category.age_min ? `${category.age_min}+ ans` :
+            `-${category.age_max} ans`;
+        info.push(`<div class="col-auto"><small class="text-muted"><i class="fas fa-birthday-cake"></i> ${ageText}</small></div>`);
+    }
+    
+    if (category.genre) {
+        const genreText = category.genre === 'M' ? 'Hommes' : 'Femmes';
+        info.push(`<div class="col-auto"><small class="text-muted"><i class="fas fa-venus-mars"></i> ${genreText}</small></div>`);
+    }
+    
+    if (category.niveau_min || category.niveau_max) {
+        const niveauText = category.niveau_min && category.niveau_max ?
+            `${getNiveauText(category.niveau_min)} - ${getNiveauText(category.niveau_max)}` :
+            category.niveau_min ? `${getNiveauText(category.niveau_min)}+` :
+            `-${getNiveauText(category.niveau_max)}`;
+        info.push(`<div class="col-auto"><small class="text-muted"><i class="fas fa-mountain"></i> ${niveauText}</small></div>`);
+    }
+    
+    if (category.max_participants) {
+        info.push(`<div class="col-auto"><small class="text-muted"><i class="fas fa-users"></i> ${category.participants_count || 0}/${category.max_participants}</small></div>`);
+    }
+    
+    return info.join('');
+}
+
+function isCategoryEligible(category) {
+    // Vérification de l'âge
+    if (userAge !== null && (category.age_min || category.age_max)) {
+        if (category.age_min && userAge < category.age_min) return false;
+        if (category.age_max && userAge > category.age_max) return false;
+    }
+    
+    // Vérification du genre
+    if (userGenre && category.genre && userGenre !== category.genre) {
+        return false;
+    }
+    
+    return true;
+}
+
+function suggestCategories() {
+    if (currentStep === 2 && categories.length > 0) {
+        displayCategories();
+    }
+}
+
+function selectCategory(categoryId) {
+    selectedCategory = categories.find(c => c.id === categoryId);
+    
+    // Mettre à jour l'interface
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    const selectedCard = document.querySelector(`[data-category-id="${categoryId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+        selectedCard.querySelector('input[type="radio"]').checked = true;
+    }
+}
+
+// Navigation entre les étapes
+function nextStep() {
+    if (!validateCurrentStep()) return;
+    
+    if (currentStep < 3) {
+        currentStep++;
+        showStep(currentStep);
+    }
+}
+
+function previousStep() {
+    if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+    }
+}
+
+function showStep(step) {
+    // Masquer toutes les étapes
+    document.querySelectorAll('.step-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Afficher l'étape courante
+    document.getElementById(`step${step}`).style.display = 'block';
+    
+    // Mettre à jour les indicateurs
+    document.querySelectorAll('.step').forEach((indicator, index) => {
+        indicator.classList.toggle('active', index + 1 === step);
+        indicator.classList.toggle('completed', index + 1 < step);
+    });
+    
+    // Mettre à jour la barre de progression
+    const progress = (step / 3) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    
+    // Mettre à jour les boutons
+    document.getElementById('btnPrevious').style.display = step > 1 ? 'inline-block' : 'none';
+    document.getElementById('btnNext').style.display = step < 3 ? 'inline-block' : 'none';
+    document.getElementById('btnSubmit').style.display = step === 3 ? 'inline-block' : 'none';
+    
+    // Actions spécifiques selon l'étape
+    if (step === 2) {
+        loadCategories();
+    } else if (step === 3) {
+        updateSummary();
+    }
+}
+
+// Validation des étapes
+function validateCurrentStep() {
+    switch (currentStep) {
+        case 1:
+            return validateStep1();
+        case 2:
+            return validateStep2();
+        case 3:
+            return validateStep3();
+        default:
+            return true;
+    }
+}
+
+function validateStep1() {
+    const required = ['prenom', 'nom', 'email', 'dateNaissance'];
+    let isValid = true;
+    
+    required.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    // Validation de l'email
+    const email = document.getElementById('email');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.value)) {
+        email.classList.add('is-invalid');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        showAlert('Veuillez remplir tous les champs obligatoires', 'warning');
+    }
+    
+    return isValid;
+}
+
+function validateStep2() {
+    const selectedRadio = document.querySelector('input[name="category"]:checked');
+    if (!selectedRadio) {
+        showAlert('Veuillez sélectionner une catégorie', 'warning');
+        return false;
+    }
+    
+    selectedCategory = categories.find(c => c.id == selectedRadio.value);
+    return true;
+}
+
+function validateStep3() {
+    const acceptConditions = document.getElementById('acceptConditions');
+    const acceptDonnees = document.getElementById('acceptDonnees');
+    
+    if (!acceptConditions.checked || !acceptDonnees.checked) {
+        showAlert('Veuillez accepter les conditions obligatoires', 'warning');
+        return false;
+    }
+    
+    return true;
+}
+
+// Mise à jour du résumé
+function updateSummary() {
+    const summaryInfo = document.getElementById('summaryInfo');
+    const summaryCategory = document.getElementById('summaryCategory');
+    const prixTotal = document.getElementById('prixTotal');
+    
+    // Informations personnelles
+    summaryInfo.innerHTML = `
+        <p><strong>Nom :</strong> ${escapeHtml(document.getElementById('prenom').value)} ${escapeHtml(document.getElementById('nom').value)}</p>
+        <p><strong>Email :</strong> ${escapeHtml(document.getElementById('email').value)}</p>
+        <p><strong>Âge :</strong> ${userAge || 'Non calculé'} ans</p>
+        ${document.getElementById('club').value ? `<p><strong>Club :</strong> ${escapeHtml(document.getElementById('club').value)}</p>` : ''}
+        ${document.getElementById('niveau').value ? `<p><strong>Niveau :</strong> ${getNiveauText(document.getElementById('niveau').value)}</p>` : ''}
+    `;
+    
+    // Catégorie
+    if (selectedCategory) {
+        summaryCategory.innerHTML = `
+            <h6 style="color: ${selectedCategory.couleur || '#007bff'}">${escapeHtml(selectedCategory.nom)}</h6>
+            ${selectedCategory.description ? `<p class="small text-muted">${escapeHtml(selectedCategory.description)}</p>` : ''}
+            <p><strong>Prix :</strong> ${selectedCategory.prix ? selectedCategory.prix + ' €' : 'Gratuit'}</p>
+        `;
+        
+        // Prix total
+        const totalPrix = (competition?.prix || 0) + (selectedCategory.prix || 0);
+        prixTotal.textContent = totalPrix + ' €';
+    }
+}
+
+// Soumission du formulaire
+function initFormValidation() {
+    document.getElementById('inscriptionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitInscription();
+    });
+}
+
+function submitInscription() {
+    const formData = {
+        // Informations personnelles
+        prenom: document.getElementById('prenom').value.trim(),
+        nom: document.getElementById('nom').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        telephone: document.getElementById('telephone').value.trim(),
+        date_naissance: document.getElementById('dateNaissance').value,
+        genre: document.getElementById('genre').value || null,
+        niveau: document.getElementById('niveau').value || null,
+        club: document.getElementById('club').value.trim(),
+        licence: document.getElementById('licence').value.trim(),
+        commentaires: document.getElementById('commentaires').value.trim(),
+        
+        // Catégorie
+        categorie_id: selectedCategory?.id,
+        
+        // Autorisations
+        autorisation_photos: document.getElementById('acceptPhotos').checked,
+        
+        // Compétition
+        competition_id: competition?.id
+    };
+    
+    const submitBtn = document.getElementById('btnSubmit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Inscription en cours...';
+    
+    fetch('/api/inscription', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessModal(data);
+        } else {
+            showAlert(data.message || 'Erreur lors de l\'inscription', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de l\'inscription', 'danger');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Confirmer l\'inscription';
+    });
+}
+
+function showSuccessModal(data) {
+    document.getElementById('confirmNom').textContent = `${data.user.prenom} ${data.user.nom}`;
+    document.getElementById('confirmCategorie').textContent = selectedCategory?.nom || 'Aucune';
+    
+    const modal = new bootstrap.Modal(document.getElementById('successModal'));
+    modal.show();
+}
+
+// Utilitaires
+function getNiveauText(niveau) {
+    const niveaux = {
+        debutant: 'Débutant',
+        intermediaire: 'Intermédiaire',
+        confirme: 'Confirmé',
+        expert: 'Expert'
+    };
+    return niveaux[niveau] || niveau;
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.step {
+    transition: all 0.3s ease;
+    color: #6c757d;
+}
+
+.step.active {
+    color: #0d6efd;
+}
+
+.step.completed {
+    color: #198754;
+}
+
+.category-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+}
+
+.category-card:hover {
+    border-color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.category-card.selected {
+    border-color: #198754 !important;
+    background-color: rgba(25, 135, 84, 0.05);
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.progress-bar {
+    transition: width 0.5s ease;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Animation d'apparition */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.step-content {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}checkbox" id="acceptConditions" required>
+                                    <label class="form-check-label" for="acceptConditions">
+                                        J'accepte les <a href="#" data-bs-toggle="modal" data-bs-target="#conditionsModal">conditions générales</a> et le règlement de la compétition *
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="acceptDonnees" required>
+                                    <label class="form-check-label" for="acceptDonnees">
+                                        J'accepte que mes données soient utilisées dans le cadre de cette compétition *
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="
