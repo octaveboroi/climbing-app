@@ -1,0 +1,900 @@
+{% extends "base.html" %}
+
+{% block title %}Classements - Climbing Competition{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-warning mb-3">
+            <i class="fas fa-trophy"></i>
+            Classements
+        </h1>
+        <p class="lead text-muted" id="competitionName">
+            Résultats en temps réel
+        </p>
+        <div class="text-muted">
+            <i class="fas fa-sync-alt" id="refreshIcon"></i>
+            Dernière mise à jour : <span id="lastUpdate"></span>
+        </div>
+    </div>
+
+    <!-- Filtres et contrôles -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Catégorie</label>
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">Toutes les catégories</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Affichage</label>
+                            <select class="form-select" id="displayMode">
+                                <option value="general">Classement général</option>
+                                <option value="category">Par catégorie</option>
+                                <option value="gender">Par genre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Nombre de résultats</label>
+                            <select class="form-select" id="limitResults">
+                                <option value="">Tous</option>
+                                <option value="10">Top 10</option>
+                                <option value="20">Top 20</option>
+                                <option value="50">Top 50</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" onclick="refreshClassements()" id="refreshBtn">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h4 class="mb-0" id="totalValidations">0</h4>
+                            <small>Validations</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Podium (Top 3) -->
+    <div class="row mb-5" id="podiumSection" style="display: none;">
+        <div class="col-12">
+            <h3 class="text-center mb-4">
+                <i class="fas fa-medal text-warning"></i>
+                Podium
+            </h3>
+            <div class="row justify-content-center">
+                <!-- Deuxième place -->
+                <div class="col-md-3 text-center">
+                    <div class="podium-place" id="secondPlace">
+                        <div class="podium-rank bg-secondary">2</div>
+                        <div class="podium-content">
+                            <i class="fas fa-medal fa-3x text-secondary mb-2"></i>
+                            <h5 class="podium-name">-</h5>
+                            <p class="podium-score text-secondary">0 pts</p>
+                            <p class="podium-category small text-muted">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Première place -->
+                <div class="col-md-3 text-center">
+                    <div class="podium-place winner" id="firstPlace">
+                        <div class="podium-rank bg-warning">1</div>
+                        <div class="podium-content">
+                            <i class="fas fa-crown fa-4x text-warning mb-3"></i>
+                            <h4 class="podium-name">-</h4>
+                            <p class="podium-score text-warning">0 pts</p>
+                            <p class="podium-category small text-muted">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Troisième place -->
+                <div class="col-md-3 text-center">
+                    <div class="podium-place" id="thirdPlace">
+                        <div class="podium-rank bg-warning">3</div>
+                        <div class="podium-content">
+                            <i class="fas fa-medal fa-3x text-warning mb-2"></i>
+                            <h5 class="podium-name">-</h5>
+                            <p class="podium-score text-warning">0 pts</p>
+                            <p class="podium-category small text-muted">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classements -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-ol"></i>
+                        <span id="classementTitle">Classement général</span>
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                            <label class="form-check-label" for="autoRefresh">
+                                Auto-refresh (30s)
+                            </label>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleFullscreen()">
+                            <i class="fas fa-expand"></i>
+                            Plein écran
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="classementTable">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th width="60">Rang</th>
+                                    <th>Grimpeur</th>
+                                    <th>Catégorie</th>
+                                    <th width="100">Score</th>
+                                    <th width="80">Voies</th>
+                                    <th width="100">Progression</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classementBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Chargement...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques détaillées -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar"></i>
+                        Top 5 des voies les plus validées
+                    </h6>
+                </div>
+                <div class="card-body" id="topVoies">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-users"></i>
+                        Répartition par catégorie
+                    </h6>
+                </div>
+                <div class="card-body" id="repartitionCategories">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let classements = [];
+let categories = [];
+let competition = null;
+let autoRefreshInterval = null;
+let lastRankings = new Map(); // Pour tracker les progressions
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    loadInitialData();
+    initFilters();
+    initAutoRefresh();
+    updateLastUpdate();
+});
+
+// Chargement initial des données
+function loadInitialData() {
+    Promise.all([
+        fetch('/api/competition/current').then(r => r.json()),
+        fetch('/api/categories/public').then(r => r.json())
+    ])
+    .then(([compData, catData]) => {
+        competition = compData.competition;
+        categories = catData.categories || [];
+        
+        updateCompetitionInfo();
+        populateCategoryFilter();
+        loadClassements();
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showError('Erreur lors du chargement des données');
+    });
+}
+
+// Mise à jour des informations de compétition
+function updateCompetitionInfo() {
+    if (competition) {
+        document.getElementById('competitionName').innerHTML = `
+            <strong>${escapeHtml(competition.nom)}</strong>
+            ${competition.lieu ? ` - ${escapeHtml(competition.lieu)}` : ''}
+        `;
+    }
+}
+
+// Population du filtre des catégories
+function populateCategoryFilter() {
+    const select = document.getElementById('categoryFilter');
+    select.innerHTML = '<option value="">Toutes les catégories</option>';
+    
+    categories.forEach(cat => {
+        select.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.nom)}</option>`;
+    });
+}
+
+// Initialisation des filtres
+function initFilters() {
+    ['categoryFilter', 'displayMode', 'limitResults'].forEach(filterId => {
+        document.getElementById(filterId).addEventListener('change', loadClassements);
+    });
+}
+
+// Chargement des classements
+function loadClassements() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+    
+    refreshBtn.disabled = true;
+    refreshIcon.classList.add('fa-spin');
+    
+    const params = new URLSearchParams({
+        category: document.getElementById('categoryFilter').value || '',
+        mode: document.getElementById('displayMode').value || 'general',
+        limit: document.getElementById('limitResults').value || ''
+    });
+    
+    fetch(`/api/classements/public?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateRankingsProgress(data.classements);
+                classements = data.classements || [];
+                updateClassementTable();
+                updatePodium();
+                updateStats(data.stats);
+                updateTopVoies(data.top_voies);
+                updateRepartitionCategories(data.repartition_categories);
+                updateLastUpdate();
+            } else {
+                throw new Error(data.message || 'Erreur lors du chargement');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showError('Erreur lors du chargement des classements');
+        })
+        .finally(() => {
+            refreshBtn.disabled = false;
+            refreshIcon.classList.remove('fa-spin');
+        });
+}
+
+// Suivi des progressions
+function updateRankingsProgress(newClassements) {
+    newClassements.forEach((grimpeur, index) => {
+        const newRank = index + 1;
+        const oldRank = lastRankings.get(grimpeur.id);
+        
+        if (oldRank !== undefined) {
+            if (newRank < oldRank) {
+                grimpeur.progression = 'up';
+                grimpeur.progressionValue = oldRank - newRank;
+            } else if (newRank > oldRank) {
+                grimpeur.progression = 'down';
+                grimpeur.progressionValue = newRank - oldRank;
+            } else {
+                grimpeur.progression = 'stable';
+                grimpeur.progressionValue = 0;
+            }
+        } else {
+            grimpeur.progression = 'new';
+            grimpeur.progressionValue = 0;
+        }
+        
+        lastRankings.set(grimpeur.id, newRank);
+    });
+}
+
+// Mise à jour du tableau de classement
+function updateClassementTable() {
+    const tbody = document.getElementById('classementBody');
+    const title = document.getElementById('classementTitle');
+    
+    // Mise à jour du titre
+    const mode = document.getElementById('displayMode').value;
+    const category = document.getElementById('categoryFilter').value;
+    
+    if (category) {
+        const cat = categories.find(c => c.id == category);
+        title.textContent = `Classement - ${cat ? cat.nom : 'Catégorie'}`;
+    } else if (mode === 'category') {
+        title.textContent = 'Classement par catégorie';
+    } else if (mode === 'gender') {
+        title.textContent = 'Classement par genre';
+    } else {
+        title.textContent = 'Classement général';
+    }
+    
+    if (classements.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5 text-muted">
+                    <i class="fas fa-trophy fa-3x mb-3 opacity-50"></i><br>
+                    Aucun résultat disponible
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = classements.map((grimpeur, index) => {
+        const rank = index + 1;
+        const medalClass = getRankClass(rank);
+        const progressionIcon = getProgressionIcon(grimpeur.progression, grimpeur.progressionValue);
+        
+        return `
+            <tr class="classement-row ${grimpeur.progression === 'new' ? 'table-success' : ''}" 
+                style="animation-delay: ${index * 0.1}s">
+                <td class="text-center">
+                    <span class="rank-badge ${medalClass}">${rank}</span>
+                    ${rank <= 3 ? getMedalIcon(rank) : ''}
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-circle me-2 ${getGenderColor(grimpeur.genre)}">
+                            ${grimpeur.prenom.charAt(0)}${grimpeur.nom.charAt(0)}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">${escapeHtml(grimpeur.prenom)} ${escapeHtml(grimpeur.nom)}</h6>
+                            ${grimpeur.club ? `<small class="text-muted">${escapeHtml(grimpeur.club)}</small>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    ${grimpeur.categorie_nom ? 
+                        `<span class="badge" style="background-color: ${grimpeur.categorie_couleur || '#6c757d'}">${escapeHtml(grimpeur.categorie_nom)}</span>` : 
+                        '<span class="text-muted">-</span>'
+                    }
+                </td>
+                <td class="text-center">
+                    <span class="score-display ${getScoreClass(grimpeur.score_total)}">${grimpeur.score_total || 0}</span>
+                    <br><small class="text-muted">pts</small>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-primary">${grimpeur.voies_validees || 0}</span>
+                    <br><small class="text-muted">voies</small>
+                </td>
+                <td class="text-center">
+                    ${progressionIcon}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Mise à jour du podium
+function updatePodium() {
+    const podiumSection = document.getElementById('podiumSection');
+    
+    if (classements.length >= 3) {
+        podiumSection.style.display = 'block';
+        
+        const updatePodiumPlace = (position, grimpeur) => {
+            const place = document.getElementById(position);
+            if (grimpeur) {
+                place.querySelector('.podium-name').textContent = `${grimpeur.prenom} ${grimpeur.nom}`;
+                place.querySelector('.podium-score').textContent = `${grimpeur.score_total || 0} pts`;
+                place.querySelector('.podium-category').textContent = grimpeur.categorie_nom || '-';
+            }
+        };
+        
+        updatePodiumPlace('firstPlace', classements[0]);
+        updatePodiumPlace('secondPlace', classements[1]);
+        updatePodiumPlace('thirdPlace', classements[2]);
+        
+        // Animation du podium
+        setTimeout(() => {
+            document.querySelectorAll('.podium-place').forEach((place, index) => {
+                place.style.animation = `podiumRise 0.8s ease-out ${index * 0.2}s both`;
+            });
+        }, 500);
+    } else {
+        podiumSection.style.display = 'none';
+    }
+}
+
+// Mise à jour des statistiques
+function updateStats(stats) {
+    if (stats) {
+        document.getElementById('totalParticipants').textContent = stats.total_participants || 0;
+        document.getElementById('totalValidations').textContent = stats.total_validations || 0;
+    }
+}
+
+// Mise à jour du top des voies
+function updateTopVoies(topVoies) {
+    const container = document.getElementById('topVoies');
+    
+    if (!topVoies || topVoies.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">Aucune donnée disponible</p>';
+        return;
+    }
+    
+    container.innerHTML = topVoies.map((voie, index) => `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <span class="badge bg-primary me-2">${index + 1}</span>
+                <strong>${escapeHtml(voie.nom)}</strong>
+                <br>
+                <small class="text-muted">${voie.difficulte_text || ''} - ${voie.points || 0} pts</small>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-success">${voie.validations_count || 0}</span>
+                <br>
+                <small class="text-muted">validations</small>
+            </div>
+        </div>
+        ${index < topVoies.length - 1 ? '<hr>' : ''}
+    `).join('');
+}
+
+// Mise à jour de la répartition par catégorie
+function updateRepartitionCategories(repartition) {
+    const container = document.getElementById('repartitionCategories');
+    
+    if (!repartition || repartition.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">Aucune donnée disponible</p>';
+        return;
+    }
+    
+    const total = repartition.reduce((sum, cat) => sum + (cat.count || 0), 0);
+    
+    container.innerHTML = repartition.map(cat => {
+        const percentage = total > 0 ? Math.round((cat.count / total) * 100) : 0;
+        
+        return `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>${escapeHtml(cat.nom || 'Sans catégorie')}</span>
+                    <span class="fw-bold">${cat.count || 0}</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: ${percentage}%; background-color: ${cat.couleur || '#007bff'}">
+                    </div>
+                </div>
+                <small class="text-muted">${percentage}%</small>
+            </div>
+        `;
+    }).join('');
+}
+
+// Auto-refresh
+function initAutoRefresh() {
+    const checkbox = document.getElementById('autoRefresh');
+    
+    if (checkbox.checked) {
+        startAutoRefresh();
+    }
+    
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+}
+
+function startAutoRefresh() {
+    stopAutoRefresh(); // Arrêter l'ancien intervalle s'il existe
+    autoRefreshInterval = setInterval(() => {
+        loadClassements();
+    }, 30000); // 30 secondes
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+// Refresh manuel
+function refreshClassements() {
+    loadClassements();
+}
+
+// Plein écran
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+            document.querySelector('.fas.fa-expand').className = 'fas fa-compress';
+        });
+    } else {
+        document.exitFullscreen().then(() => {
+            document.querySelector('.fas.fa-compress').className = 'fas fa-expand';
+        });
+    }
+}
+
+// Mise à jour de l'heure
+function updateLastUpdate() {
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('fr-FR');
+}
+
+// Utilitaires d'affichage
+function getRankClass(rank) {
+    if (rank === 1) return 'rank-gold';
+    if (rank === 2) return 'rank-silver';
+    if (rank === 3) return 'rank-bronze';
+    return '';
+}
+
+function getMedalIcon(rank) {
+    const icons = {
+        1: '<i class="fas fa-crown text-warning ms-1"></i>',
+        2: '<i class="fas fa-medal text-secondary ms-1"></i>',
+        3: '<i class="fas fa-medal text-warning ms-1"></i>'
+    };
+    return icons[rank] || '';
+}
+
+function getGenderColor(genre) {
+    if (genre === 'M') return 'bg-primary';
+    if (genre === 'F') return 'bg-danger';
+    return 'bg-secondary';
+}
+
+function getScoreClass(score) {
+    if (score >= 1000) return 'text-success fw-bold';
+    if (score >= 500) return 'text-warning fw-bold';
+    return 'text-primary fw-bold';
+}
+
+function getProgressionIcon(progression, value) {
+    switch (progression) {
+        case 'up':
+            return `<span class="text-success"><i class="fas fa-arrow-up"></i> +${value}</span>`;
+        case 'down':
+            return `<span class="text-danger"><i class="fas fa-arrow-down"></i> -${value}</span>`;
+        case 'stable':
+            return '<span class="text-muted"><i class="fas fa-minus"></i></span>';
+        case 'new':
+            return '<span class="text-success"><i class="fas fa-star"></i> New</span>';
+        default:
+            return '<span class="text-muted">-</span>';
+    }
+}
+
+// Utilitaires
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Nettoyage au déchargement
+window.addEventListener('beforeunload', () => {
+    stopAutoRefresh();
+});
+</script>
+
+<style>
+/* Podium */
+.podium-place {
+    position: relative;
+    padding: 2rem 1rem;
+    border-radius: 1rem;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    margin-bottom: 2rem;
+}
+
+.podium-place.winner {
+    background: linear-gradient(145deg, #fff3cd, #ffeaa7);
+    transform: scale(1.1);
+}
+
+.podium-place:hover {
+    transform: translateY(-5px);
+}
+
+.podium-place.winner:hover {
+    transform: scale(1.1) translateY(-5px);
+}
+
+.podium-rank {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+    border: 3px solid white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.podium-name {
+    margin-bottom: 0.5rem;
+}
+
+.podium-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+/* Classement */
+.avatar-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.rank-gold {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #8b7000;
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+}
+
+.rank-silver {
+    background: linear-gradient(45deg, #c0c0c0, #ddd);
+    color: #666;
+    box-shadow: 0 2px 10px rgba(192, 192, 192, 0.3);
+}
+
+.rank-bronze {
+    background: linear-gradient(45deg, #cd7f32, #daa520);
+    color: #5d3a00;
+    box-shadow: 0 2px 10px rgba(205, 127, 50, 0.3);
+}
+
+.score-display {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+/* Animations */
+@keyframes podiumRise {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.classement-row {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Refresh animation */
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Table sticky header */
+.table-responsive {
+    max-height: 70vh;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .podium-place {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .avatar-circle {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    .rank-badge {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+    
+    .score-display {
+        font-size: 1.1rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .card-header .d-flex,
+    #refreshBtn,
+    .btn {
+        display: none !important;
+    }
+    
+    .podium-place {
+        break-inside: avoid;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .podium-place {
+        background: linear-gradient(145deg, #2d3748, #4a5568);
+        color: white;
+    }
+    
+    .podium-place.winner {
+        background: linear-gradient(145deg, #744210, #975a16);
+    }
+}
+
+/* Fullscreen styles */
+:fullscreen {
+    background: white;
+}
+
+:fullscreen .container-fluid {
+    padding: 1rem;
+}
+
+/* Progress bars dans stats */
+.progress {
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+/* Hover effects */
+.card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+/* Badge animations */
+.badge {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+{% endblock %}center">
+                            <h4 class="mb-0" id="totalParticipants">0</h4>
+                            <small>Participants</small>
+                        </div>
+                        <div class="col-6 text-
