@@ -1,0 +1,900 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion Catégories - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-tags text-primary"></i>
+                Gestion des Catégories
+            </h2>
+            <p class="text-muted mb-0">Organisez vos participants par âge, niveau ou équipe</p>
+        </div>
+        <button class="btn btn-primary" onclick="showCategoryModal()">
+            <i class="fas fa-plus"></i>
+            Nouvelle catégorie
+        </button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalCategories">0</h4>
+                            <p class="mb-0">Total catégories</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-tags fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="activeCategories">0</h4>
+                            <p class="mb-0">Actives</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="totalParticipants">0</h4>
+                            <p class="mb-0">Participants</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="avgAge">0</h4>
+                            <p class="mb-0">Âge moyen</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-birthday-cake fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Rechercher</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Nom de la catégorie...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" id="typeFilter">
+                        <option value="">Tous les types</option>
+                        <option value="age">Par âge</option>
+                        <option value="niveau">Par niveau</option>
+                        <option value="genre">Par genre</option>
+                        <option value="equipe">Par équipe</option>
+                        <option value="libre">Libre</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tous</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()" title="Reset filtres">
+                        <i class="fas fa-undo"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des catégories -->
+    <div class="row" id="categoriesGrid">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Catégorie -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tags"></i>
+                    <span id="modalTitle">Nouvelle catégorie</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="categoryForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nom de la catégorie *</label>
+                            <input type="text" class="form-control" id="categoryNom" required 
+                                   placeholder="Ex: U12 Mixte, Seniors Hommes, Débutants...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Couleur</label>
+                            <input type="color" class="form-control form-control-color" id="categoryCouleur" value="#007bff">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="categoryDescription" rows="3"
+                                      placeholder="Description de la catégorie, critères d'inscription..."></textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Type de catégorie</label>
+                            <select class="form-select" id="categoryType">
+                                <option value="libre">Libre</option>
+                                <option value="age">Par âge</option>
+                                <option value="niveau">Par niveau</option>
+                                <option value="genre">Par genre</option>
+                                <option value="equipe">Par équipe</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Genre (si applicable)</label>
+                            <select class="form-select" id="categoryGenre">
+                                <option value="">Mixte</option>
+                                <option value="M">Masculin</option>
+                                <option value="F">Féminin</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Critères d'âge -->
+                        <div class="col-md-6" id="ageMinContainer" style="display: none;">
+                            <label class="form-label">Âge minimum</label>
+                            <input type="number" class="form-control" id="categoryAgeMin" min="0" max="100">
+                        </div>
+                        <div class="col-md-6" id="ageMaxContainer" style="display: none;">
+                            <label class="form-label">Âge maximum</label>
+                            <input type="number" class="form-control" id="categoryAgeMax" min="0" max="100">
+                        </div>
+                        
+                        <!-- Critères de niveau -->
+                        <div class="col-md-6" id="niveauMinContainer" style="display: none;">
+                            <label class="form-label">Niveau minimum</label>
+                            <select class="form-select" id="categoryNiveauMin">
+                                <option value="">Aucun</option>
+                                <option value="debutant">Débutant</option>
+                                <option value="intermediaire">Intermédiaire</option>
+                                <option value="confirme">Confirmé</option>
+                                <option value="expert">Expert</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="niveauMaxContainer" style="display: none;">
+                            <label class="form-label">Niveau maximum</label>
+                            <select class="form-select" id="categoryNiveauMax">
+                                <option value="">Aucun</option>
+                                <option value="debutant">Débutant</option>
+                                <option value="intermediaire">Intermédiaire</option>
+                                <option value="confirme">Confirmé</option>
+                                <option value="expert">Expert</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Prix d'inscription (€)</label>
+                            <input type="number" class="form-control" id="categoryPrix" min="0" step="0.01" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre max participants</label>
+                            <input type="number" class="form-control" id="categoryMaxParticipants" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ordre d'affichage</label>
+                            <input type="number" class="form-control" id="categoryOrdre" min="0" value="0">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="categoryActive" checked>
+                                <label class="form-check-label" for="categoryActive">
+                                    Catégorie active
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="categoryInscriptionOuverte" checked>
+                                <label class="form-check-label" for="categoryInscriptionOuverte">
+                                    Inscription ouverte
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="categoryId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Participants -->
+<div class="modal fade" id="participantsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users"></i>
+                    Participants - <span id="participantsCategoryName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="participantsList">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let categories = [];
+let filteredCategories = [];
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    initFilters();
+    initForm();
+});
+
+// Chargement des catégories
+function loadCategories() {
+    fetch('/api/categories')
+        .then(response => response.json())
+        .then(data => {
+            categories = data.categories || [];
+            filteredCategories = [...categories];
+            updateGrid();
+            updateStats();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors du chargement des catégories', 'danger');
+        });
+}
+
+// Initialisation des filtres
+function initFilters() {
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('typeFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+}
+
+// Initialisation du formulaire
+function initForm() {
+    document.getElementById('categoryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveCategory();
+    });
+    
+    // Affichage conditionnel des champs selon le type
+    document.getElementById('categoryType').addEventListener('change', function() {
+        toggleTypeFields(this.value);
+    });
+}
+
+function toggleTypeFields(type) {
+    const ageContainers = ['ageMinContainer', 'ageMaxContainer'];
+    const niveauContainers = ['niveauMinContainer', 'niveauMaxContainer'];
+    
+    // Masquer tous les champs spécifiques
+    [...ageContainers, ...niveauContainers].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    
+    // Afficher selon le type
+    if (type === 'age') {
+        ageContainers.forEach(id => {
+            document.getElementById(id).style.display = 'block';
+        });
+    } else if (type === 'niveau') {
+        niveauContainers.forEach(id => {
+            document.getElementById(id).style.display = 'block';
+        });
+    }
+}
+
+// Mise à jour de la grille
+function updateGrid() {
+    const grid = document.getElementById('categoriesGrid');
+    
+    if (filteredCategories.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucune catégorie trouvée</h5>
+                <p class="text-muted">Créez votre première catégorie ou modifiez vos filtres</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = filteredCategories.map(category => createCategoryCard(category)).join('');
+}
+
+// Création d'une carte de catégorie
+function createCategoryCard(category) {
+    return `
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 category-card" style="border-left: 4px solid ${category.couleur || '#007bff'}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">${escapeHtml(category.nom)}</h6>
+                    <div class="d-flex gap-1">
+                        ${category.active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}
+                        ${category.inscription_ouverte ? '<span class="badge bg-info">Ouvert</span>' : '<span class="badge bg-warning">Fermé</span>'}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="badge bg-primary">${getTypeText(category.type)}</span>
+                        ${category.genre ? `<span class="badge bg-secondary">${category.genre === 'M' ? 'Hommes' : 'Femmes'}</span>` : ''}
+                    </div>
+                    
+                    ${category.description ? `<p class="card-text small text-muted">${escapeHtml(category.description)}</p>` : ''}
+                    
+                    <div class="row g-2 mb-3">
+                        ${getCriteriaDisplay(category)}
+                    </div>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Participants</small><br>
+                            <span class="fw-bold text-primary">${category.participants_count || 0}</span>
+                            ${category.max_participants ? ` / ${category.max_participants}` : ''}
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Prix</small><br>
+                            <span class="fw-bold text-success">${category.prix ? category.prix + ' €' : 'Gratuit'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editCategory(${category.id})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="viewParticipants(${category.id})" title="Voir participants">
+                            <i class="fas fa-users"></i>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="exportCategory(${category.id})" title="Exporter">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="copyCategory(${category.id})" title="Dupliquer">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteCategory(${category.id})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Affichage des critères de la catégorie
+function getCriteriaDisplay(category) {
+    let criteria = [];
+    
+    if (category.age_min || category.age_max) {
+        const ageText = category.age_min && category.age_max ? 
+            `${category.age_min}-${category.age_max} ans` :
+            category.age_min ? `${category.age_min}+ ans` :
+            `-${category.age_max} ans`;
+        criteria.push(`
+            <div class="col-12">
+                <small class="text-muted">Âge</small><br>
+                <span class="fw-bold">${ageText}</span>
+            </div>
+        `);
+    }
+    
+    if (category.niveau_min || category.niveau_max) {
+        const niveauText = category.niveau_min && category.niveau_max ?
+            `${getNiveauText(category.niveau_min)} - ${getNiveauText(category.niveau_max)}` :
+            category.niveau_min ? `${getNiveauText(category.niveau_min)}+` :
+            `-${getNiveauText(category.niveau_max)}`;
+        criteria.push(`
+            <div class="col-12">
+                <small class="text-muted">Niveau</small><br>
+                <span class="fw-bold">${niveauText}</span>
+            </div>
+        `);
+    }
+    
+    return criteria.join('');
+}
+
+// Mise à jour des statistiques
+function updateStats() {
+    const activeCategories = categories.filter(c => c.active);
+    const totalParticipants = categories.reduce((sum, c) => sum + (c.participants_count || 0), 0);
+    const avgAge = categories.length > 0 ? 
+        Math.round(categories.reduce((sum, c) => sum + (c.age_moyen || 0), 0) / categories.length) : 0;
+    
+    document.getElementById('totalCategories').textContent = categories.length;
+    document.getElementById('activeCategories').textContent = activeCategories.length;
+    document.getElementById('totalParticipants').textContent = totalParticipants;
+    document.getElementById('avgAge').textContent = avgAge || 'N/A';
+}
+
+// Application des filtres
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    filteredCategories = categories.filter(category => {
+        // Filtre de recherche
+        if (search && !category.nom.toLowerCase().includes(search) && 
+            !category.description?.toLowerCase().includes(search)) {
+            return false;
+        }
+        
+        // Filtre type
+        if (type && category.type !== type) {
+            return false;
+        }
+        
+        // Filtre statut
+        if (status === 'active' && !category.active) {
+            return false;
+        }
+        if (status === 'inactive' && category.active) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    updateGrid();
+}
+
+// Reset des filtres
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    applyFilters();
+}
+
+// Affichage du modal de catégorie
+function showCategoryModal(category = null) {
+    document.getElementById('modalTitle').textContent = category ? 'Modifier la catégorie' : 'Nouvelle catégorie';
+    
+    if (category) {
+        document.getElementById('categoryId').value = category.id;
+        document.getElementById('categoryNom').value = category.nom;
+        document.getElementById('categoryCouleur').value = category.couleur || '#007bff';
+        document.getElementById('categoryDescription').value = category.description || '';
+        document.getElementById('categoryType').value = category.type || 'libre';
+        document.getElementById('categoryGenre').value = category.genre || '';
+        document.getElementById('categoryAgeMin').value = category.age_min || '';
+        document.getElementById('categoryAgeMax').value = category.age_max || '';
+        document.getElementById('categoryNiveauMin').value = category.niveau_min || '';
+        document.getElementById('categoryNiveauMax').value = category.niveau_max || '';
+        document.getElementById('categoryPrix').value = category.prix || 0;
+        document.getElementById('categoryMaxParticipants').value = category.max_participants || '';
+        document.getElementById('categoryOrdre').value = category.ordre || 0;
+        document.getElementById('categoryActive').checked = category.active;
+        document.getElementById('categoryInscriptionOuverte').checked = category.inscription_ouverte;
+        
+        toggleTypeFields(category.type || 'libre');
+    } else {
+        document.getElementById('categoryForm').reset();
+        document.getElementById('categoryId').value = '';
+        document.getElementById('categoryCouleur').value = '#007bff';
+        document.getElementById('categoryPrix').value = 0;
+        document.getElementById('categoryOrdre').value = categories.length;
+        document.getElementById('categoryActive').checked = true;
+        document.getElementById('categoryInscriptionOuverte').checked = true;
+        
+        toggleTypeFields('libre');
+    }
+    
+    new bootstrap.Modal(document.getElementById('categoryModal')).show();
+}
+
+// Actions sur les catégories
+function editCategory(id) {
+    const category = categories.find(c => c.id === id);
+    if (category) {
+        showCategoryModal(category);
+    }
+}
+
+function viewParticipants(id) {
+    const category = categories.find(c => c.id === id);
+    if (category) {
+        document.getElementById('participantsCategoryName').textContent = category.nom;
+        loadParticipants(id);
+        new bootstrap.Modal(document.getElementById('participantsModal')).show();
+    }
+}
+
+function loadParticipants(categoryId) {
+    const container = document.getElementById('participantsList');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    `;
+    
+    fetch(`/api/categories/${categoryId}/participants`)
+        .then(response => response.json())
+        .then(data => {
+            const participants = data.participants || [];
+            
+            if (participants.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-users fa-3x mb-3 opacity-50"></i><br>
+                        Aucun participant dans cette catégorie
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nom</th>
+                                <th>Âge</th>
+                                <th>Niveau</th>
+                                <th>Club</th>
+                                <th>Validations</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${participants.map(p => `
+                                <tr>
+                                    <td>
+                                        <strong>${escapeHtml(p.prenom)} ${escapeHtml(p.nom)}</strong>
+                                        ${p.email ? `<br><small class="text-muted">${escapeHtml(p.email)}</small>` : ''}
+                                    </td>
+                                    <td>${p.age || 'N/A'}</td>
+                                    <td>${p.niveau ? getNiveauText(p.niveau) : 'N/A'}</td>
+                                    <td>${p.club ? escapeHtml(p.club) : 'Aucun'}</td>
+                                    <td>
+                                        <span class="badge bg-primary">${p.validations_count || 0}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editUser(${p.id})" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCategory(${p.id}, ${p.categorie_id})" title="Retirer de la catégorie">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            container.innerHTML = `
+                <div class="text-center py-4 text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i><br>
+                    Erreur lors du chargement des participants
+                </div>
+            `;
+        });
+}
+
+function exportCategory(id) {
+    const category = categories.find(c => c.id === id);
+    if (!category) return;
+    
+    fetch(`/api/categories/${id}/export`)
+        .then(response => response.blob())
+        .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `categorie_${category.nom.replace(/\s+/g, '_')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de l\'export', 'danger');
+        });
+}
+
+function copyCategory(id) {
+    const category = categories.find(c => c.id === id);
+    if (category) {
+        const newCategory = { ...category };
+        newCategory.nom += ' (Copie)';
+        delete newCategory.id;
+        showCategoryModal(newCategory);
+    }
+}
+
+function deleteCategory(id) {
+    const category = categories.find(c => c.id === id);
+    if (!category) return;
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la catégorie "${category.nom}" ? Les participants seront déplacés vers "Aucune catégorie".`)) {
+        fetch(`/api/categories/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Catégorie supprimée avec succès', 'success');
+                loadCategories();
+            } else {
+                showAlert(data.message || 'Erreur lors de la suppression', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la suppression', 'danger');
+        });
+    }
+}
+
+function removeFromCategory(userId, categoryId) {
+    if (confirm('Retirer cet utilisateur de la catégorie ?')) {
+        fetch(`/api/users/${userId}/remove-category`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Utilisateur retiré de la catégorie', 'success');
+                loadParticipants(categoryId);
+                loadCategories();
+            } else {
+                showAlert(data.message || 'Erreur lors de la modification', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la modification', 'danger');
+        });
+    }
+}
+
+// Sauvegarde d'une catégorie
+function saveCategory() {
+    const formData = {
+        nom: document.getElementById('categoryNom').value.trim(),
+        couleur: document.getElementById('categoryCouleur').value,
+        description: document.getElementById('categoryDescription').value.trim(),
+        type: document.getElementById('categoryType').value,
+        genre: document.getElementById('categoryGenre').value || null,
+        age_min: document.getElementById('categoryAgeMin').value || null,
+        age_max: document.getElementById('categoryAgeMax').value || null,
+        niveau_min: document.getElementById('categoryNiveauMin').value || null,
+        niveau_max: document.getElementById('categoryNiveauMax').value || null,
+        prix: parseFloat(document.getElementById('categoryPrix').value) || 0,
+        max_participants: document.getElementById('categoryMaxParticipants').value || null,
+        ordre: parseInt(document.getElementById('categoryOrdre').value) || 0,
+        active: document.getElementById('categoryActive').checked,
+        inscription_ouverte: document.getElementById('categoryInscriptionOuverte').checked
+    };
+    
+    const categoryId = document.getElementById('categoryId').value;
+    const url = categoryId ? `/api/categories/${categoryId}` : '/api/categories';
+    const method = categoryId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(categoryId ? 'Catégorie modifiée avec succès' : 'Catégorie créée avec succès', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+            loadCategories();
+        } else {
+            showAlert(data.message || 'Erreur lors de la sauvegarde', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la sauvegarde', 'danger');
+    });
+}
+
+// Navigation vers les utilisateurs
+function editUser(id) {
+    window.location.href = `/admin/users?edit=${id}`;
+}
+
+// Utilitaires
+function getTypeText(type) {
+    const types = {
+        libre: 'Libre',
+        age: 'Par âge',
+        niveau: 'Par niveau',
+        genre: 'Par genre',
+        equipe: 'Par équipe'
+    };
+    return types[type] || type;
+}
+
+function getNiveauText(niveau) {
+    const niveaux = {
+        debutant: 'Débutant',
+        intermediaire: 'Intermédiaire',
+        confirme: 'Confirmé',
+        expert: 'Expert'
+    };
+    return niveaux[niveau] || niveau;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.category-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.btn-group .btn {
+    margin: 0 1px;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Animation pour les cartes de stats */
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Style pour les badges */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.category-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .btn-group .btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.8rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock %}
