@@ -1,7 +1,35 @@
 # requirements.txt
-Flask==2.3.3
-Flask-SQLAlchemy==3.0.5
-Werkzeug==2.3.7
-Pillow==10.0.1
+
+# Core Flask framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Database ORM and migrations
+SQLAlchemy==2.0.23
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+
+# File uploads and image handling
+Pillow==10.1.0
+
+# Security and authentication
+Flask-WTF==1.2.1
+WTForms==3.1.0
+
+# Session management
+Flask-Session==0.5.0
+
+# Environment variables
 python-dotenv==1.0.0
+
+# Date and time utilities
+python-dateutil==2.8.2
+
+# HTTP requests (if needed for external APIs)
+requests==2.31.0
+
+# Development and debugging
+Flask-DebugToolbar==0.13.1
+
+# Production server
 gunicorn==21.2.0
